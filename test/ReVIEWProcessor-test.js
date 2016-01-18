@@ -9,37 +9,20 @@ import path from "path";
 describe("ReVIEWProcessor-test", function () {
     describe("#parse", function () {
         it("should return AST", function () {
-            var result = parse(`<div><p><span>aaaa</span></p></div>`);
+            var result = parse(`= Text\n\naaaa`);
             assert(result.type === "Document");
         });
-        it("script should CodeBlock", function () {
-            var result = parse(`<script> var a = 1; </script>`);
+        it("@<code>{} should be Code", function () {
+            var result = parse(`@<code>{var a = 1}`);
             let script = result.children[0];
             script.children.forEach(code => {
-                assert.equal(code.type, "CodeBlock");
+                assert.equal(code.type, "Code");
             });
         });
-        it("<p> should Paragraph", function () {
-            var result = parse(`<p>test</p>`);
+        it("text should be Paragraph", function () {
+            var result = parse(`test`);
             let pTag = result.children[0];
             assert.equal(pTag.type, "Paragraph");
-        });
-        it("should map type to TxtNode's type", function () {
-            function createTag(tagName) {
-                return `<${tagName}></${tagName}>`;
-            }
-
-            function testMap(typeMap) {
-                Object.keys(typeMap).forEach(tagName => {
-                    let result = parse(createTag(tagName));
-                    assert(result.type === "Document");
-                    let firstChild = result.children[0];
-                    let expectedType = typeMap[tagName];
-                    assert.equal(firstChild.type, expectedType);
-                });
-            }
-
-            testMap(tagNameToType);
         });
     });
     describe("ReVIEWPlugin", function () {

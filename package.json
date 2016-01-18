@@ -42,8 +42,6 @@
     "textlint-rule-no-todo": "^1.0.3"
   },
   "dependencies": {
-    "hast": "0.0.2",
-    "structured-source": "^3.0.2",
-    "traverse": "^0.6.6"
+    "txt-ast-traverse": "^1.2.1"
   }
 }
