@@ -31,6 +31,10 @@ $ textlint ch01.re
 
     npm test
 
+## Current Limitations
+
+* All the blocks e.g. `//list[]{ ... //}` or `//image[][]` are ignored. So they do not appear in the resulting AST.
+
 ## Contributing
 
 1. Fork it!
