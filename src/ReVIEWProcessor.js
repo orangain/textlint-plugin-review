@@ -8,7 +8,7 @@ export default class ReVIEWProcessor {
 
     static availableExtensions() {
         return [
-            ".html"
+            ".re"
         ];
     }
 
@@ -20,7 +20,7 @@ export default class ReVIEWProcessor {
             postProcess(messages, filePath) {
                 return {
                     messages,
-                    filePath: filePath ? filePath : "<html>"
+                    filePath: filePath ? filePath : "<text>"
                 };
             }
         };
