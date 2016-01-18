@@ -32,6 +32,19 @@ describe("ReVIEWProcessor-test", function () {
             assert.deepEqual(result.children.map(node => node.type),
                              ['Paragraph', 'Break', 'Paragraph']);
         });
+        it("equal signs should be headings", function () {
+            var result = parse(`={ch01} Test\n\n== Headings`);
+            let heading1 = result.children[0];
+            assert.equal(heading1.type, 'Header');
+            assert.equal(heading1.depth, 1);
+            assert.equal(heading1.children[0].type, 'Str');
+            assert.equal(heading1.children[0].raw, 'Test');
+            let heading2 = result.children[result.children.length - 1];
+            assert.equal(heading2.type, 'Header');
+            assert.equal(heading2.depth, 2);
+            assert.equal(heading2.children[0].type, 'Str');
+            assert.equal(heading2.children[0].raw, 'Headings');
+        });
         it("@<code>{} should be Code", function () {
             var result = parse(`@<code>{var a = 1}`);
             let script = result.children[0];

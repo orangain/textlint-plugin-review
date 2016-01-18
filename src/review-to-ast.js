@@ -144,7 +144,7 @@ function parseHeading(text, startIndex, lineNumber) {
   var labelOffset = text.indexOf(label);
   assert(labelOffset >= 0);
   var strNode = createStrNode(label, startIndex + labelOffset, lineNumber, labelOffset);
-  return createHeadingNode(text, startIndex, lineNumber, strNode);
+  return createHeadingNode(text, depth, startIndex, lineNumber, strNode);
 }
 
 /**
@@ -260,13 +260,15 @@ function createBRNode(text, startIndex, lineNumber) {
 /**
  * create HeaderNode.
  * @param {string} text - Raw text of node
+ * @param {number} depth - Depth of heading
  * @param {number} startIndex - Start index in the document
  * @param {number} lineNumber - Line number of node
  * @param {TxtNode} strNode - Child StrNode
  * @return {TxtNode} Created StrNode
  */
-function createHeadingNode(text, startIndex, lineNumber, strNode) {
+function createHeadingNode(text, depth, startIndex, lineNumber, strNode) {
   var node = createNode(Syntax.Heading, text, startIndex, lineNumber);
+  node.depth = depth;
   node.children = [strNode];
   return node;
 }
