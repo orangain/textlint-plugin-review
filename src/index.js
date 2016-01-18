@@ -1,6 +1,6 @@
 // LICENSE : MIT
 "use strict";
-import HTMLProcessor from "./HTMLProcessor";
+import ReVIEWProcessor from "./ReVIEWProcessor";
 export default {
-    Processor: HTMLProcessor
+    Processor: ReVIEWProcessor
 }

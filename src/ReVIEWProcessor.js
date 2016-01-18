@@ -1,7 +1,7 @@
 // LICENSE : MIT
 "use strict";
-import {parse} from "./html-to-ast";
-export default class HTMLProcessor {
+import {parse} from "./review-to-ast";
+export default class ReVIEWProcessor {
     constructor(config) {
         this.config = config;
     }

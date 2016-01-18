@@ -1,12 +1,12 @@
 // LICENSE : MIT
 "use strict";
 import assert from "power-assert";
-import HTMLProcessor from "../src/HTMLProcessor";
-import {parse} from "../src/html-to-ast";
+import ReVIEWProcessor from "../src/ReVIEWProcessor";
+import {parse} from "../src/review-to-ast";
 import {tagNameToType} from "../src/mapping";
 import {TextLintCore} from "textlint";
 import path from "path";
-describe("HTMLProcessor-test", function () {
+describe("ReVIEWProcessor-test", function () {
     describe("#parse", function () {
         it("should return AST", function () {
             var result = parse(`<div><p><span>aaaa</span></p></div>`);
@@ -42,12 +42,12 @@ describe("HTMLProcessor-test", function () {
             testMap(tagNameToType);
         });
     });
-    describe("HTMLPlugin", function () {
+    describe("ReVIEWPlugin", function () {
         let textlint;
-        context("when target file is a HTML", function () {
+        context("when target file is a ReVIEW", function () {
             beforeEach(function () {
                 textlint = new TextLintCore();
-                textlint.addProcessor(HTMLProcessor);
+                textlint.addProcessor(ReVIEWProcessor);
                 textlint.setupRules({
                     "no-todo": require("textlint-rule-no-todo")
                 });
