@@ -12,17 +12,32 @@ describe("ReVIEWProcessor-test", function () {
             var result = parse(`= Text\n\naaaa`);
             assert(result.type === "Document");
         });
+        it("text should be Paragraph", function () {
+            var result = parse(`test`);
+            let paragraph = result.children[0];
+            assert.equal(paragraph.type, "Paragraph");
+        });
+        it("consecutive lines should form a Paragraph", function () {
+            var result = parse(`test\nparagraph`);
+            let paragraph = result.children[0];
+            assert.equal(paragraph.type, "Paragraph");
+            assert.equal(paragraph.children.length, 2);
+            paragraph.children.forEach(str => {
+              assert.equal(str.type, 'Str');
+            });
+        });
+        it("separated lines should form each Paragraph splited by Break", function () {
+            var result = parse(`test\nparagraph\n\nanother paragraph`);
+            assert.equal(result.children.length, 3);
+            assert.deepEqual(result.children.map(node => node.type),
+                             ['Paragraph', 'Break', 'Paragraph']);
+        });
         it("@<code>{} should be Code", function () {
             var result = parse(`@<code>{var a = 1}`);
             let script = result.children[0];
             script.children.forEach(code => {
                 assert.equal(code.type, "Code");
             });
-        });
-        it("text should be Paragraph", function () {
-            var result = parse(`test`);
-            let pTag = result.children[0];
-            assert.equal(pTag.type, "Paragraph");
         });
     });
     describe("ReVIEWPlugin", function () {
