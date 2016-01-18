@@ -1,22 +1,21 @@
 {
-  "name": "textlint-plugin-html",
+  "name": "textlint-plugin-review",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/textlint/textlint-plugin-html.git"
+    "url": "git+https://github.com/orangain/textlint-plugin-review.git"
   },
-  "author": "azu",
-  "email": "azuciao@gmail.com",
-  "homepage": "https://github.com/textlint/textlint-plugin-html",
+  "author": "orangain",
+  "email": "orangain@gmail.com",
+  "homepage": "https://github.com/orangain/textlint-plugin-review",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/textlint/textlint-plugin-html/issues"
+    "url": "https://github.com/orangain/textlint-plugin-review/issues"
   },
-  "version": "0.1.2",
-  "description": "textlint HTML processsor plugin.",
+  "version": "0.1.0",
+  "description": "textlint Re:VIEW processsor plugin.",
   "main": "lib/index.js",
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "directories": {
     "test": "test"
@@ -30,7 +29,8 @@
   "keywords": [
     "textlint",
     "plugin",
-    "html",
+    "review",
+    "re:view",
     "lint"
   ],
   "devDependencies": {
