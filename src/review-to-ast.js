@@ -98,7 +98,7 @@ function doParse(text) {
     }
 
     // ignore comment
-    if (currentLine.startsWith('#@#')) {
+    if (currentLine.startsWith('#@')) {
       return;
     }
 
