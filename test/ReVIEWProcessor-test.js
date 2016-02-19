@@ -59,7 +59,7 @@ describe("ReVIEWProcessor-test", function () {
                              ['Paragraph', 'Break', 'Paragraph']);
         });
         it("#@warn should be ignored", function () {
-            let result = parse(`test\nparagraph\n\n#@warn(TODO: should be fixed)\n\nanother paragraph`);
+            let result = parse(`test\nparagraph\n\n#@warn(TODO: should be fixed)\nanother paragraph`);
             assert.deepEqual(result.children.map(node => node.type),
                              ['Paragraph', 'Break', 'Paragraph']);
         });
