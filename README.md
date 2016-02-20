@@ -34,7 +34,6 @@ $ textlint ch01.re
 ## Current Limitations
 
 * All the blocks, e.g. `//list[]{ ... //}` or `//image[][]`, are ignored. So they do not appear in the resulting AST.
-* All the pre-processing commands except for comments, e.g. `#@mapfile() ... #@end`, are not supported. They are treated as plain texts.
 
 ## Contributing
 
