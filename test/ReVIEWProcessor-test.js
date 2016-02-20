@@ -52,6 +52,19 @@ describe("ReVIEWProcessor-test", function () {
                 assert.equal(code.type, "Code");
             });
         });
+        it("#@# should be ignored", function () {
+            let result = parse(`#@# ???\ntest\nparagraph\n#@# !!!\n\nanother paragraph`);
+            assert.equal(result.children.length, 3);
+            assert(!result.children[0].raw.includes('???'));
+            assert.deepEqual(result.children.map(node => node.type),
+                             ['Paragraph', 'Break', 'Paragraph']);
+        });
+        it("#@warn should be ignored", function () {
+            let result = parse(`test\nparagraph\n\n#@warn(TODO: should be fixed)\nanother paragraph`);
+            assert(!result.children[2].raw.includes('TODO'));
+            assert.deepEqual(result.children.map(node => node.type),
+                             ['Paragraph', 'Break', 'Paragraph']);
+        });
     });
     describe("ReVIEWPlugin", function () {
         let textlint;
