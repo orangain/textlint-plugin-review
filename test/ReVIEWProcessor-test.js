@@ -26,11 +26,11 @@ describe("ReVIEWProcessor-test", function () {
               assert.equal(str.type, 'Str');
             });
         });
-        it("separated lines should form each Paragraph splited by Break", function () {
+        it("separated lines should form each Paragraph", function () {
             var result = parse(`test\nparagraph\n\nanother paragraph`);
-            assert.equal(result.children.length, 3);
+            assert.equal(result.children.length, 2);
             assert.deepEqual(result.children.map(node => node.type),
-                             ['Paragraph', 'Break', 'Paragraph']);
+                             ['Paragraph', 'Paragraph']);
         });
         it("equal signs should be headings", function () {
             var result = parse(`={ch01} Test\n\n== Headings`);
@@ -52,18 +52,26 @@ describe("ReVIEWProcessor-test", function () {
                 assert.equal(code.type, "Code");
             });
         });
+        it("@<br>{} should be Break", function () {
+            let result = parse(`first line and@<br>{}second line are same pagaraph.\n`);
+            let script = result.children[0];
+            assert(script.children[0].raw.startsWith("first line"));
+            assert.equal(script.children[1].type, "Break");
+            assert.equal(script.children[1].raw, "@<br>{}");
+            assert(script.children[2].raw.startsWith("second line"));
+        });
         it("#@# should be ignored", function () {
             let result = parse(`#@# ???\ntest\nparagraph\n#@# !!!\n\nanother paragraph`);
-            assert.equal(result.children.length, 3);
+            assert.equal(result.children.length, 2);
             assert(!result.children[0].raw.includes('???'));
             assert.deepEqual(result.children.map(node => node.type),
-                             ['Paragraph', 'Break', 'Paragraph']);
+                             ['Paragraph', 'Paragraph']);
         });
         it("#@warn should be ignored", function () {
             let result = parse(`test\nparagraph\n\n#@warn(TODO: should be fixed)\nanother paragraph`);
-            assert(!result.children[2].raw.includes('TODO'));
+            assert(!result.children[1].raw.includes('TODO'));
             assert.deepEqual(result.children.map(node => node.type),
-                             ['Paragraph', 'Break', 'Paragraph']);
+                             ['Paragraph', 'Paragraph']);
         });
     });
     describe("ReVIEWPlugin", function () {
