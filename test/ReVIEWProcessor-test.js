@@ -26,7 +26,7 @@ describe("ReVIEWProcessor-test", function () {
               assert.equal(str.type, 'Str');
             });
         });
-        it("separated lines should form each Paragraph splited by Break", function () {
+        it("separated lines should form each Paragraph", function () {
             var result = parse(`test\nparagraph\n\nanother paragraph`);
             assert.equal(result.children.length, 2);
             assert.deepEqual(result.children.map(node => node.type),
@@ -57,6 +57,7 @@ describe("ReVIEWProcessor-test", function () {
             let script = result.children[0];
             assert(script.children[0].raw.startsWith("first line"));
             assert.equal(script.children[1].type, "Break");
+            assert.equal(script.children[1].raw, "@<br>{}");
             assert(script.children[2].raw.startsWith("second line"));
         });
         it("#@# should be ignored", function () {
