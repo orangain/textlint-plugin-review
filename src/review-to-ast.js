@@ -49,6 +49,8 @@ function doParse(text) {
     return result;
   }, []);
 
+  flushParagraph(children);
+
   // update paragraph node using str nodes
   children.forEach(function(node) {
     if (node.type == Syntax.Paragraph) {
@@ -75,6 +77,7 @@ function doParse(text) {
   return ast;
 
   var isInBlock = false;
+  var currentParagraph = null;
 
   function parseLine(result, currentLine, lineNumber, startIndex) {
     var currentText = currentLine.replace(/\r?\n$/, ''); // without line endings
@@ -88,12 +91,14 @@ function doParse(text) {
     }
 
     if (currentLine.search(/^\/\/\w+.*?\{/) >= 0) {
+      flushParagraph(result);
       isInBlock = true;
       return;
     }
 
     // ignore images or something
     if (currentLine.search(/^\/\/\w+/) >= 0) {
+      flushParagraph(result);
       return;
     }
 
@@ -106,27 +111,32 @@ function doParse(text) {
     if (currentLine.startsWith('=')) {
       var headingNode = parseHeading(currentText, startIndex, lineNumber);
       result.push(headingNode);
+      flushParagraph(result);
       return;
     }
 
     // empty line
     if (currentLine == '\n' || currentLine == '\r\n') {
-      var emptyBreakNode = createBRNode(currentLine, startIndex, lineNumber);
-      result.push(emptyBreakNode);
+      flushParagraph(result);
       return;
     }
 
     // normal string
     var nodes = parseText(currentText, startIndex, lineNumber);
-    if (result.length && result[result.length - 1].type == Syntax.Paragraph) {
+    if (currentParagraph) {
       // add str node to the last paragraph
-      let paragraph = result[result.length - 1];
-      paragraph.children = paragraph.children.concat(nodes);
+      currentParagraph.children = currentParagraph.children.concat(nodes);
     } else {
       // create paragraph node having str node
-      let paragraph = createParagraphNode(nodes);
-      result.push(paragraph);
+      currentParagraph = createParagraphNode(nodes);
     }
+  }
+
+  function flushParagraph(result) {
+    if (currentParagraph) {
+      result.push(currentParagraph);
+    }
+    currentParagraph = null;
   }
 }
 
@@ -183,6 +193,9 @@ function parseText(text, startIndex, lineNumber) {
                                   lineNumber, startColumn + labelOffset);
       linkNode.children = [strNode];
       nodes.push(linkNode);
+    } else if (markup.name == 'br') {
+      let emptyBreakNode = createBRNode(match[0], startIndex, lineNumber, startColumn);
+      nodes.push(emptyBreakNode);
     } else if (['img', 'list', 'hd', 'table', 'fn'].indexOf(markup.name) >= 0) {
       // do nothing
     } else {
@@ -248,13 +261,14 @@ function createStrNode(text, startIndex, lineNumber, startColumn) {
 
 /**
  * create BreakNode.
- * @param {string} text - Raw text of line ending, '\r\n' or '\n'
+ * @param {string} text - Raw text of line break
  * @param {number} startIndex - Start index in the document
  * @param {number} lineNumber - Line number of node
+ * @param {number} [startColumn=0] - Start column in the line
  * @return {TxtNode} Created BRNode
  */
-function createBRNode(text, startIndex, lineNumber) {
-  return createNode(Syntax.Break, text, startIndex, lineNumber);
+function createBRNode(text, startIndex, lineNumber, startColumn) {
+  return createNode(Syntax.Break, text, startIndex, lineNumber, startColumn);
 }
 
 /**
