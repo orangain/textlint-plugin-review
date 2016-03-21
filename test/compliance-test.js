@@ -1,5 +1,5 @@
 "use strict";
-import {test,isTxtAST} from "textlint-ast-test";
+import {isTxtAST} from "textlint-ast-test";
 import {parse} from "../src/review-to-ast";
 import assert from "power-assert";
 import fs from "fs";
@@ -10,7 +10,6 @@ describe("compliance", function () {
             var fixturePath = path.join(__dirname, "fixtures/test.re");
             var content = fs.readFileSync(fixturePath, "utf-8");
             var AST = parse(content);
-            test(AST);
             assert(isTxtAST(AST));
         });
     })
