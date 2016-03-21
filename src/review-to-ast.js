@@ -60,6 +60,7 @@ function doParse(text) {
 
   var ast = {
     type: Syntax.Document,
+    raw: text,
     range: [0, startIndex],
     loc: {
       start: {
