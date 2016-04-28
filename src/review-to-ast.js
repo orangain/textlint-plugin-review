@@ -91,7 +91,7 @@ function doParse(text) {
       return;
     }
 
-    if (currentLine.search(/^\/\/\w+.*?\{/) >= 0) {
+    if (currentLine.search(/^\/\/\w+.*?\{$/m) >= 0) {
       flushParagraph(result);
       isInBlock = true;
       return;
