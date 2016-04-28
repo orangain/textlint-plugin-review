@@ -73,6 +73,28 @@ describe("ReVIEWProcessor-test", function () {
             assert.deepEqual(result.children.map(node => node.type),
                              ['Paragraph', 'Paragraph']);
         });
+        it("should ignore //list", function () {
+            let result = parse(`first line
+
+//list[][]{
+let x = 0;
+//}
+
+second line`);
+            assert(result.children.length == 2);
+            assert(result.children[0].raw == 'first line');
+            assert(result.children[1].raw == 'second line');
+        });
+        it("should not ignore following content of //footnote having inline tags", function () {
+            let result = parse(`first line
+
+//footnote[example][@<href>{http://example.com/}]
+
+second line`);
+            assert(result.children.length == 2);
+            assert(result.children[0].raw == 'first line');
+            assert(result.children[1].raw == 'second line');
+        });
     });
     describe("ReVIEWPlugin", function () {
         let textlint;
