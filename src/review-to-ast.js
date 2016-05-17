@@ -181,8 +181,15 @@ function parseTableContent(text, startIndex, lineNumber) {
   const cellRegex = /[^\t]+/g;
   var match;
   while (match = cellRegex.exec(text)) {
-    const startColumn = match.index;
-    const cellContent = match[0];
+    let startColumn = match.index;
+    let cellContent = match[0];
+    if (cellContent.startsWith('.')) {
+      cellContent = cellContent.substr(1);
+      startColumn += 1;
+    }
+    if (cellContent == '') {
+      continue;
+    }
     const cellNode = createNode('ListItem', cellContent, startIndex + startColumn,
                                 lineNumber, startColumn);
     cellNode.children = parseText(cellContent, startIndex + startColumn, lineNumber, startColumn);

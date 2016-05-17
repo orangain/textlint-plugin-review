@@ -115,6 +115,14 @@ TERM\t\tTerminal. ex: linux, kterm, vt100
                 'TERM', 'Terminal. ex: linux, kterm, vt100'
             ]);
         });
+        it("should ignore starting . in a table cell", function () {
+            let result = parse(`
+//table[][]{
+.\t..gitignore\t
+//}`);
+            assert.deepEqual(result.children.map(node => node.children[0].raw),
+                             ['.gitignore']);
+        });
     });
     describe("ReVIEWPlugin", function () {
         let textlint;
