@@ -115,6 +115,15 @@ TERM\t\tTerminal. ex: linux, kterm, vt100
                 'TERM', 'Terminal. ex: linux, kterm, vt100'
             ]);
         });
+        it("should parse inline markups in a table cell", function () {
+            let result = parse(`
+//table[][]{
+Name\tValue
+-----------
+@<code>{x}\t1
+//}`);
+            assert(result.children[2].children[0].type == 'Code');
+        });
         it("should ignore starting . in a table cell", function () {
             let result = parse(`
 //table[][]{
