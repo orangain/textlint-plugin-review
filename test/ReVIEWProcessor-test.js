@@ -123,6 +123,13 @@ TERM\t\tTerminal. ex: linux, kterm, vt100
             assert.deepEqual(result.children.map(node => node.children[0].raw),
                              ['.gitignore']);
         });
+        it("should ignore comments in a table", function () {
+            let result = parse(`
+//table[][]{
+#@# comment in a table
+//}`);
+            assert(result.children.length == 0);
+        });
     });
     describe("ReVIEWPlugin", function () {
         let textlint;

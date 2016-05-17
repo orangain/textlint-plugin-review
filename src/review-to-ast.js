@@ -83,6 +83,11 @@ function doParse(text) {
   function parseLine(result, currentLine, lineNumber, startIndex) {
     var currentText = currentLine.replace(/\r?\n$/, ''); // without line endings
 
+    // ignore comment
+    if (currentLine.startsWith('#@')) {
+      return;
+    }
+
     // ignore block
     if (isInBlock()) {
       if (currentLine.startsWith('//}')) {
@@ -103,11 +108,6 @@ function doParse(text) {
     // ignore images or something
     if (currentLine.search(/^\/\/\w+/) >= 0) {
       flushParagraph(result);
-      return;
-    }
-
-    // ignore comment
-    if (currentLine.startsWith('#@')) {
       return;
     }
 
