@@ -14,6 +14,12 @@ export const Syntax = {
   Link: 'Link',
 
   Footnote: 'Footnote',
+  UnorderedList: 'List',
+  OrderedList: 'List',
+  DefinitionList: 'List',
+  ListItem: 'ListItem',
+  Table: 'Table',
+  TableCell: 'ListItem',
 };
 
 export const ChunkTypes = {
