@@ -122,7 +122,7 @@ second line`);
 
     it('should parse table cell as ListItem', function () {
       const result = parse(`
-//table[][]{
+//table[id][Environment Variables]{
 Name		Comment
 -------------------------------------------------------------
 PATH		Directories where commands exist
@@ -131,14 +131,22 @@ TERM		Terminal. ex: linux, kterm, vt100
       assert(result.children.length == 1);
       const table = result.children[0];
       assert(table.type == 'Table');
-      assert(table.children.length == 6);
-      table.children.forEach(function (node) {
+      assert(table.children.length == 7);
+      const caption = table.children[0];
+      assert(caption.type == 'Caption');
+      assert(caption.children.length == 1);
+      const captionStr = caption.children[0];
+      assert(captionStr.type == 'Str');
+      assert(captionStr.raw == 'Environment Variables');
+
+      const tableCells = table.children.slice(1);
+      tableCells.forEach(function (node) {
         assert(node.type == 'ListItem');
         assert(node.children.length == 1);
         assert(node.children[0].type == 'Str');
       });
 
-      assert.deepEqual(table.children.map(node => node.children[0].raw), [
+      assert.deepEqual(tableCells.map(node => node.children[0].raw), [
         'Name', 'Comment',
         'PATH', 'Directories where commands exist',
         'TERM', 'Terminal. ex: linux, kterm, vt100',

@@ -193,6 +193,17 @@ function parseArgs(argsText, offset) {
 function parseTable(blockName, blockArgs, chunk) {
   const node = createNodeFromChunk(chunk, Syntax.Table);
   node.children = [];
+  const firstLine = chunk.lines[0];
+  const captionText = blockArgs[1].value;
+  if (captionText != '') {
+    const startColumn = blockArgs[1].startColumn;
+    const caption = createNode(Syntax.Caption, captionText, firstLine.startIndex + startColumn,
+                              firstLine.lineNumber, startColumn);
+    caption.children = parseText(captionText, firstLine.startIndex + startColumn,
+                                firstLine.lineNumber, startColumn);
+    node.children.push(caption);
+  }
+
   chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
     Array.prototype.push.apply(node.children, parseTableContent(line));
   });
