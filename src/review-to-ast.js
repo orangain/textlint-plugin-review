@@ -93,23 +93,30 @@ function doParse(text) {
     if (isInBlock()) {
       if (currentLine.startsWith('//}')) {
         currentBlock = null;
-      } else if (currentBlock == 'table') {
+      } else if (currentBlock == '//table') {
         Array.prototype.push.apply(result, parseTableContent(currentText, startIndex, lineNumber));
       }
 
       return;
     }
 
-    let match = currentLine.match(/^\/\/(\w+).*?\{$/m);
+    // blocks
+    let match = currentText.match(/^(\/\/\w+)(.*)\{?$/);
     if (match) {
       flushParagraph(result);
-      currentBlock = match[1];
-      return;
-    }
+      const blockName = match[1];
+      const blockArgs = parseArgs(match[2]);
+      if (currentText.endsWith('{')) {
+        // block with open and end tags, e.g. //list, //emlist, etc.
+        currentBlock = blockName;
+      } else {
+        // one-line block, e.g. //footnote, //image, etc.
+        if (blockName == '//footnote') {
+          result.push(
+            parseFootnoteBlock(currentText, blockName, blockArgs, startIndex, lineNumber));
+        }
+      }
 
-    // ignore images or something
-    if (currentLine.search(/^\/\/\w+/) >= 0) {
-      flushParagraph(result);
       return;
     }
 
@@ -148,6 +155,20 @@ function doParse(text) {
 
   function isInBlock() {
     return currentBlock != null;
+  }
+
+  function parseArgs(argsText) {
+    var match;
+    const argRegex = /\[(.*?)\]/g;
+    const args = [];
+    while (match = argRegex.exec(argsText)) {
+      args.push({
+        value: match[1],
+        index: match.index + 1,
+      });
+    }
+
+    return args;
   }
 }
 
@@ -202,6 +223,26 @@ function parseTableContent(text, startIndex, lineNumber) {
   }
 
   return nodes;
+}
+
+/**
+ * parse footnote block.
+ * @param {string} text - Text of the line
+ * @param {string} blockName - Name of the block, should be '//footnote'
+ * @param {[Arg]} blockArgs - Args of the block
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @return {TxtNode} FootnoteNode
+ */
+function parseFootnoteBlock(text, blockName, blockArgs, startIndex, lineNumber) {
+  const footnote = createNode(Syntax.Footnote, text, startIndex, lineNumber);
+  const footnoteText = blockArgs[1].value;
+  const startColumn = blockName.length + blockArgs[1].index;
+  const paragraph = createNode(Syntax.Paragraph, footnoteText,
+                               startIndex + startColumn, lineNumber, startColumn);
+  paragraph.children = parseText(footnoteText, startIndex + startColumn, lineNumber, startColumn);
+  footnote.children = [paragraph];
+  return footnote;
 }
 
 /**

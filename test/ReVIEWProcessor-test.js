@@ -119,9 +119,9 @@ second line`);
 //footnote[example][@<href>{http://example.com/}]
 
 second line`);
-      assert(result.children.length == 2);
+      assert(result.children.length == 3);
       assert(result.children[0].raw == 'first line');
-      assert(result.children[1].raw == 'second line');
+      assert(result.children[2].raw == 'second line');
     });
 
     it('should parse table cell as ListItem', function () {
@@ -171,6 +171,15 @@ Name	Value
 #@# comment in a table
 //}`);
       assert(result.children.length == 0);
+    });
+
+    it('should parse footnote', function () {
+      const result = parse(`//footnote[foo][This is a footnote text.]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      assert(footnote.raw == '//footnote[foo][This is a footnote text.]');
+      assert(footnote.children[0].type == 'Paragraph');
+      assert(footnote.children[0].raw == 'This is a footnote text.');
     });
   });
 
