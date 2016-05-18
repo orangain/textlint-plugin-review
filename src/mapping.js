@@ -15,3 +15,12 @@ export const Syntax = {
 
   Footnote: 'Footnote',
 };
+
+export const ChunkTypes = {
+  Paragraph: 'Paragraph',
+  Heading: 'Heading',
+  UnorderedList: 'UnorderedList',
+  OrderedList: 'OrderedList',
+  DefinitionList: 'DefinitionList',
+  Block: 'Block',
+};
