@@ -1,0 +1,6 @@
+{
+  "preset": "airbnb",
+  "disallowEmptyBlocks": {
+    "allExcept": ["comments"]
+  }
+}
