@@ -1,8 +1,8 @@
 // LICENSE : MIT
-"use strict";
+'use strict';
 import assert from 'assert';
-import {traverse} from 'txt-ast-traverse';
-import {Syntax} from './mapping';
+import { traverse } from 'txt-ast-traverse';
+import { Syntax } from './mapping';
 
 /**
  * parse text and return ast mapped location info.
@@ -26,8 +26,9 @@ export function parse(text) {
           throw ex;
         }
       }
+
       prevNode = node;
-    }
+    },
   });
 
   return ast;
@@ -42,7 +43,7 @@ function doParse(text) {
   var lines = text.match(/(?:.*\r?\n|.+$)/g); // split lines preserving line endings
   //console.log(lines);
   var startIndex = 0;
-  var children = lines.reduce(function(result, currentLine, index) {
+  var children = lines.reduce(function (result, currentLine, index) {
     var lineNumber = index + 1;
     parseLine(result, currentLine, lineNumber, startIndex);
     startIndex += currentLine.length;
@@ -52,7 +53,7 @@ function doParse(text) {
   flushParagraph(children);
 
   // update paragraph node using str nodes
-  children.forEach(function(node) {
+  children.forEach(function (node) {
     if (node.type == Syntax.Paragraph) {
       fixParagraphNode(node, text);
     }
@@ -65,14 +66,14 @@ function doParse(text) {
     loc: {
       start: {
         line: 1,
-        column: 0
+        column: 0,
       },
       end: {
         line: lines.length,
-        column: lines[lines.length - 1].length
-      }
+        column: lines[lines.length - 1].length,
+      },
     },
-    children: children
+    children: children,
   };
 
   return ast;
@@ -95,6 +96,7 @@ function doParse(text) {
       } else if (currentBlock == 'table') {
         Array.prototype.push.apply(result, parseTableContent(currentText, startIndex, lineNumber));
       }
+
       return;
     }
 
@@ -140,6 +142,7 @@ function doParse(text) {
     if (currentParagraph) {
       result.push(currentParagraph);
     }
+
     currentParagraph = null;
   }
 
@@ -187,9 +190,11 @@ function parseTableContent(text, startIndex, lineNumber) {
       cellContent = cellContent.substr(1);
       startColumn += 1;
     }
+
     if (cellContent == '') {
       continue;
     }
+
     const cellNode = createNode('ListItem', cellContent, startIndex + startColumn,
                                 lineNumber, startColumn);
     cellNode.children = parseText(cellContent, startIndex + startColumn, lineNumber, startColumn);
@@ -211,6 +216,7 @@ function parseText(text, startIndex, lineNumber, startColumn) {
   startColumn = startColumn || 0;
   var nodes = [];
   var match;
+
   // TODO: Support escape character \} in { }
   while (match = text.match(/@<(\w+)>\{(.*?)\}/)) {
     if (match.index > 0) {
@@ -220,7 +226,7 @@ function parseText(text, startIndex, lineNumber, startColumn) {
       startColumn += node.raw.length;
     }
 
-    var markup = {name: match[1], content: match[2]};
+    var markup = { name: match[1], content: match[2] };
     if (markup.name == 'code') {
       let node = createNode(Syntax.Code, match[0], startIndex, lineNumber, startColumn);
       nodes.push(node);
@@ -280,13 +286,13 @@ function createNode(type, text, startIndex, lineNumber, startColumn) {
     loc: {
       start: {
         line: lineNumber,
-        column: startColumn
+        column: startColumn,
       },
       end: {
         line: lineNumber,
-        column: startColumn + text.length
-      }
-    }
+        column: startColumn + text.length,
+      },
+    },
   };
 }
 
@@ -338,7 +344,7 @@ function createHeadingNode(text, depth, startIndex, lineNumber, strNode) {
 function createParagraphNode(nodes) {
   return {
     type: Syntax.Paragraph,
-    children: nodes || []
+    children: nodes || [],
   };
 }
 
@@ -356,11 +362,11 @@ function fixParagraphNode(node, fullText) {
   node.loc = {
     start: {
       line: firstNode.loc.start.line,
-      column: firstNode.loc.start.column
+      column: firstNode.loc.start.column,
     },
     end: {
       line: lastNode.loc.end.line,
-      column: lastNode.loc.end.column
-    }
+      column: lastNode.loc.end.column,
+    },
   };
 }
