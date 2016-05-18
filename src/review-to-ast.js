@@ -77,34 +77,37 @@ function doParse(text) {
 
   return ast;
 
-  var isInBlock = false;
+  var currentBlock = null;
   var currentParagraph = null;
 
   function parseLine(result, currentLine, lineNumber, startIndex) {
     var currentText = currentLine.replace(/\r?\n$/, ''); // without line endings
 
+    // ignore comment
+    if (currentLine.startsWith('#@')) {
+      return;
+    }
+
     // ignore block
-    if (isInBlock) {
+    if (isInBlock()) {
       if (currentLine.startsWith('//}')) {
-        isInBlock = false;
+        currentBlock = null;
+      } else if (currentBlock == 'table') {
+        Array.prototype.push.apply(result, parseTableContent(currentText, startIndex, lineNumber));
       }
       return;
     }
 
-    if (currentLine.search(/^\/\/\w+.*?\{$/m) >= 0) {
+    let match = currentLine.match(/^\/\/(\w+).*?\{$/m);
+    if (match) {
       flushParagraph(result);
-      isInBlock = true;
+      currentBlock = match[1];
       return;
     }
 
     // ignore images or something
     if (currentLine.search(/^\/\/\w+/) >= 0) {
       flushParagraph(result);
-      return;
-    }
-
-    // ignore comment
-    if (currentLine.startsWith('#@')) {
       return;
     }
 
@@ -139,6 +142,10 @@ function doParse(text) {
     }
     currentParagraph = null;
   }
+
+  function isInBlock() {
+    return currentBlock != null;
+  }
 }
 
 /**
@@ -159,15 +166,50 @@ function parseHeading(text, startIndex, lineNumber) {
 }
 
 /**
- * parse inline tags and StrNodes from line.
+ * parse line in a table.
  * @param {string} text - Text of the line
  * @param {number} startIndex - Global start index of the line
  * @param {number} lineNumber - Line number of the line
  * @return {[TxtNode]} TxtNodes in the line
  */
-function parseText(text, startIndex, lineNumber) {
+function parseTableContent(text, startIndex, lineNumber) {
+  if (text.match(/^-+$/)) {
+    return [];  // Ignore horizontal line
+  }
+
+  const nodes = [];
+  const cellRegex = /[^\t]+/g;
+  var match;
+  while (match = cellRegex.exec(text)) {
+    let startColumn = match.index;
+    let cellContent = match[0];
+    if (cellContent.startsWith('.')) {
+      cellContent = cellContent.substr(1);
+      startColumn += 1;
+    }
+    if (cellContent == '') {
+      continue;
+    }
+    const cellNode = createNode('ListItem', cellContent, startIndex + startColumn,
+                                lineNumber, startColumn);
+    cellNode.children = parseText(cellContent, startIndex + startColumn, lineNumber, startColumn);
+    nodes.push(cellNode);
+  }
+
+  return nodes;
+}
+
+/**
+ * parse inline tags and StrNodes from line.
+ * @param {string} text - Text of the line
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @param {number} [startColumn=0] - Start column in the line
+ * @return {[TxtNode]} TxtNodes in the line
+ */
+function parseText(text, startIndex, lineNumber, startColumn) {
+  startColumn = startColumn || 0;
   var nodes = [];
-  var startColumn = 0;
   var match;
   // TODO: Support escape character \} in { }
   while (match = text.match(/@<(\w+)>\{(.*?)\}/)) {

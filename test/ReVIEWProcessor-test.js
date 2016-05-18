@@ -95,6 +95,50 @@ second line`);
             assert(result.children[0].raw == 'first line');
             assert(result.children[1].raw == 'second line');
         });
+        it("should parse table cell as ListItem", function () {
+            let result = parse(`
+//table[][]{
+Name\t\tComment
+-------------------------------------------------------------
+PATH\t\tDirectories where commands exist
+TERM\t\tTerminal. ex: linux, kterm, vt100
+//}`);
+            assert(result.children.length == 6);
+            result.children.forEach(function (node) {
+                assert(node.type == 'ListItem');
+                assert(node.children.length == 1);
+                assert(node.children[0].type == 'Str');
+            });
+            assert.deepEqual(result.children.map(node => node.children[0].raw), [
+                'Name', 'Comment',
+                'PATH', 'Directories where commands exist',
+                'TERM', 'Terminal. ex: linux, kterm, vt100'
+            ]);
+        });
+        it("should parse inline markups in a table cell", function () {
+            let result = parse(`
+//table[][]{
+Name\tValue
+-----------
+@<code>{x}\t1
+//}`);
+            assert(result.children[2].children[0].type == 'Code');
+        });
+        it("should ignore starting . in a table cell", function () {
+            let result = parse(`
+//table[][]{
+.\t..gitignore\t
+//}`);
+            assert.deepEqual(result.children.map(node => node.children[0].raw),
+                             ['.gitignore']);
+        });
+        it("should ignore comments in a table", function () {
+            let result = parse(`
+//table[][]{
+#@# comment in a table
+//}`);
+            assert(result.children.length == 0);
+        });
     });
     describe("ReVIEWPlugin", function () {
         let textlint;

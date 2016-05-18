@@ -33,7 +33,7 @@ $ textlint ch01.re
 
 ## Current Limitations
 
-* All the blocks, e.g. `//list[]{ ... //}` or `//image[][]`, are ignored. So they do not appear in the resulting AST.
+* All the blocks except for table, e.g. `//list[]{ ... //}` or `//image[][]`, are ignored. So they do not appear in the resulting AST.
 
 ## Contributing
 
