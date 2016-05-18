@@ -1,13 +1,14 @@
 // LICENSE : MIT
-"use strict";
+'use strict';
 
 export const Syntax = {
-    "Document": "Document",
-    "Heading": "Header",
-    "Paragraph": "Paragraph",
-    // inline
-    'Str': 'Str',
-    'Break': 'Break',
-    'Code': 'Code',
-    'Link': 'Link'
+  Document: 'Document',
+  Heading: 'Header',
+  Paragraph: 'Paragraph',
+
+  // inline
+  Str: 'Str',
+  Break: 'Break',
+  Code: 'Code',
+  Link: 'Link',
 };
