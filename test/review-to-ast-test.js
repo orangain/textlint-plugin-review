@@ -87,20 +87,25 @@ another paragraph`);
 
     it('should parse @<code>{} as a Code', function () {
       const result = parse(`@<code>{var a = 1}`);
-      const script = result.children[0];
-      script.children.forEach(code => {
-        assert(code.type == 'Code');
-      });
+      const paragraph = result.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 1);
+      const code = paragraph.children[0];
+      assert(code.type == 'Code');
+      assert(code.raw == '@<code>{var a = 1}');
     });
 
     it('should parse @<br>{} as a Break', function () {
       const result = parse(`first line and@<br>{}second line are same pagaraph.
 `);
-      const script = result.children[0];
-      assert(script.children[0].raw.startsWith('first line'));
-      assert(script.children[1].type == 'Break');
-      assert(script.children[1].raw == '@<br>{}');
-      assert(script.children[2].raw.startsWith('second line'));
+      const paragraph = result.children[0];
+      assert(paragraph.children[0].type == 'Str');
+      assert(paragraph.children[0].raw.startsWith('first line'));
+      assert(paragraph.children[1].type == 'Break');
+      assert(paragraph.children[1].raw == '@<br>{}');
+      assert(paragraph.children[1].loc.start.column == 14);
+      assert(paragraph.children[2].type == 'Str');
+      assert(paragraph.children[2].raw.startsWith('second line'));
     });
 
     it('should ignore #@#', function () {
