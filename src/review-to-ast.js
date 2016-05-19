@@ -142,6 +142,12 @@ function parseList(prefixRegex, chunk) {
 const BlockParsers = {
   table: parseTable,
   footnote: parseFootnote,
+  list: (blockName, blockArgs, chunk) => parseCodeBlock(1, blockName, blockArgs, chunk),
+  listnum: (blockName, blockArgs, chunk) => parseCodeBlock(1, blockName, blockArgs, chunk),
+  emlist: (blockName, blockArgs, chunk) => parseCodeBlock(0, blockName, blockArgs, chunk),
+  emlistnum: (blockName, blockArgs, chunk) => parseCodeBlock(0, blockName, blockArgs, chunk),
+  source: (blockName, blockArgs, chunk) => parseCodeBlock(null, blockName, blockArgs, chunk),
+  image: parseImage,
 };
 
 /**
@@ -184,6 +190,27 @@ function parseArgs(argsText, offset) {
 }
 
 /**
+ * parse single argument of a block as a TxtNode
+ * @param {string} type - Type of node
+ * @param {Arg} blockArg - Arg of a block to parse
+ * @param {Line} line - line where Arg exists
+ * @return {TxtNode}
+ */
+function parseBlockArg(type, blockArg, line) {
+  const captionText = blockArg.value;
+  if (!captionText) {
+    return null;
+  }
+
+  const startColumn = blockArg.startColumn;
+  const caption = createNode(type, captionText, line.startIndex + startColumn,
+                              line.lineNumber, startColumn);
+  caption.children = parseText(captionText, line.startIndex + startColumn,
+                                line.lineNumber, startColumn);
+  return caption;
+}
+
+/**
  * parse table block.
  * @param {string} blockName - Name of the block, should be '//footnote'
  * @param {[Arg]} blockArgs - Args of the block
@@ -193,14 +220,9 @@ function parseArgs(argsText, offset) {
 function parseTable(blockName, blockArgs, chunk) {
   const node = createNodeFromChunk(chunk, Syntax.Table);
   node.children = [];
-  const firstLine = chunk.lines[0];
-  const captionText = blockArgs[1].value;
-  if (captionText != '') {
-    const startColumn = blockArgs[1].startColumn;
-    const caption = createNode(Syntax.Caption, captionText, firstLine.startIndex + startColumn,
-                              firstLine.lineNumber, startColumn);
-    caption.children = parseText(captionText, firstLine.startIndex + startColumn,
-                                firstLine.lineNumber, startColumn);
+
+  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
+  if (caption) {
     node.children.push(caption);
   }
 
@@ -255,14 +277,46 @@ function parseTableContent(line) {
  */
 function parseFootnote(blockName, blockArgs, chunk) {
   const node = createNodeFromChunk(chunk, Syntax.Footnote);
-  const footnoteText = blockArgs[1].value;
-  const startColumn = blockArgs[1].startColumn;
-  const line = chunk.lines[0];
-  const paragraph = createNode(Syntax.Paragraph, footnoteText,
-                               line.startIndex + startColumn, line.lineNumber, startColumn);
-  paragraph.children = parseText(footnoteText, line.startIndex + startColumn,
-                                 line.lineNumber, startColumn);
-  node.children = [paragraph];
+  const footnoteParagraph = parseBlockArg(Syntax.Paragraph, blockArgs[1], chunk.lines[0]);
+  if (footnoteParagraph) {
+    node.children = [footnoteParagraph];
+  }
+
+  return node;
+}
+
+/**
+ * parse code block, e.g //list, //emlist, //source etc.
+ * @param {number} captionIndex - Index of caption in blockArgs, can be null if there is no caption
+ * @param {string} blockName - Name of the block, should be '//footnote'
+ * @param {[Arg]} blockArgs - Args of the block
+ * @param {Chunk} chunk - Chunk to parse
+ * @return {TxtNode} CodeBlock node
+ */
+function parseCodeBlock(captionIndex, blockName, blockArgs, chunk) {
+  const node = createNodeFromChunk(chunk, Syntax.CodeBlock);
+  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
+  if (caption) {
+    node.children = [caption];
+  }
+
+  return node;
+}
+
+/**
+ * parse image block.
+ * @param {string} blockName - Name of the block, should be '//footnote'
+ * @param {[Arg]} blockArgs - Args of the block
+ * @param {Chunk} chunk - Chunk to parse
+ * @return {TxtNode} Image node
+ */
+function parseImage(blockName, blockArgs, chunk) {
+  const node = createNodeFromChunk(chunk, Syntax.Image);
+  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
+  if (caption) {
+    node.children = [caption];
+  }
+
   return node;
 }
 

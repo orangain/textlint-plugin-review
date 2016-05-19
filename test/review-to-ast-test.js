@@ -96,17 +96,26 @@ another paragraph`);
                        ['Paragraph', 'Paragraph']);
     });
 
-    it('should ignore //list', function () {
+    it('should parse block', function () {
       const result = parse(`first line
 
-//list[][]{
+//list[foo][Assign 0 to x]{
 let x = 0;
 //}
 
 second line`);
-      assert(result.children.length == 2);
+      assert(result.children.length == 3);
       assert(result.children[0].raw == 'first line\n');
-      assert(result.children[1].raw == 'second line');
+      assert(result.children[2].raw == 'second line');
+      const list = result.children[1];
+      assert(list.type == 'CodeBlock');
+      assert(list.raw == `//list[foo][Assign 0 to x]{
+let x = 0;
+//}
+`);
+      assert(list.children.length == 1);
+      const caption = list.children[0];
+      assert(caption.type == 'Caption');
     });
 
     it('should not ignore following content of //footnote having inline tags', function () {
@@ -269,5 +278,32 @@ Name	Value
       assert(secondStr.raw == 'DEC の作っていた RISC CPU。');
     });
 
+    it('should parse single-line image block with caption', function () {
+      const result = parse(`
+//image[unixhistory][a brief history of UNIX-like OS]
+`);
+      assert(result.children.length == 1);
+      const image = result.children[0];
+      assert(image.type == 'Image');
+      assert(image.children.length == 1);
+      const caption = image.children[0];
+      assert(caption.type == 'Caption');
+      assert(caption.raw == 'a brief history of UNIX-like OS');
+    });
+
+    it('should parse multi-line image block with caption', function () {
+      const result = parse(`
+//image[unixhistory][a brief history of UNIX-like OS]{
+System V
+//}
+`);
+      assert(result.children.length == 1);
+      const image = result.children[0];
+      assert(image.type == 'Image');
+      assert(image.children.length == 1);
+      const caption = image.children[0];
+      assert(caption.type == 'Caption');
+      assert(caption.raw == 'a brief history of UNIX-like OS');
+    });
   });
 });

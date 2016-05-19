@@ -19,6 +19,8 @@ export const Syntax = {
   ListItem: 'ListItem',
   Table: 'Table',
   TableCell: 'ListItem',
+  CodeBlock: 'CodeBlock',
+  Image: 'Image',
 
   Footnote: 'Footnote',
   Caption: 'Caption',
