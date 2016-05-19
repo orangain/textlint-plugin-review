@@ -6,13 +6,6 @@ export const Syntax = {
   Document: 'Document',
   Heading: 'Header',
   Paragraph: 'Paragraph',
-
-  // inline
-  Str: 'Str',
-  Break: 'Break',
-  Code: 'Code',
-  Link: 'Link',
-
   UnorderedList: 'List',
   OrderedList: 'List',
   DefinitionList: 'List',
@@ -22,6 +15,13 @@ export const Syntax = {
   CodeBlock: 'CodeBlock',
   Image: 'Image',
 
+  // inline
+  Str: 'Str',
+  Break: 'Break',
+  Code: 'Code',
+  Link: 'Link',
+
+  // specific to review-plugin
   Footnote: 'Footnote',
   Caption: 'Caption',
 };
