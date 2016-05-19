@@ -52,10 +52,10 @@ aaaa`);
       const result = parse(`test
 paragraph`);
       const paragraph = result.children[0];
-      assert.equal(paragraph.type, 'Paragraph');
-      assert.equal(paragraph.children.length, 2);
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 2);
       paragraph.children.forEach(str => {
-        assert.equal(str.type, 'Str');
+        assert(str.type == 'Str');
       });
     });
 
@@ -64,7 +64,7 @@ paragraph`);
 paragraph
 
 another paragraph`);
-      assert.equal(result.children.length, 2);
+      assert(result.children.length == 2);
       assert.deepEqual(result.children.map(node => node.type),
                        ['Paragraph', 'Paragraph']);
     });
@@ -74,22 +74,22 @@ another paragraph`);
 
 == Headings`);
       const heading1 = result.children[0];
-      assert.equal(heading1.type, 'Header');
-      assert.equal(heading1.depth, 1);
-      assert.equal(heading1.children[0].type, 'Str');
-      assert.equal(heading1.children[0].raw, 'Test');
+      assert(heading1.type == 'Header');
+      assert(heading1.depth == 1);
+      assert(heading1.children[0].type == 'Str');
+      assert(heading1.children[0].raw == 'Test');
       const heading2 = result.children[result.children.length - 1];
-      assert.equal(heading2.type, 'Header');
-      assert.equal(heading2.depth, 2);
-      assert.equal(heading2.children[0].type, 'Str');
-      assert.equal(heading2.children[0].raw, 'Headings');
+      assert(heading2.type == 'Header');
+      assert(heading2.depth == 2);
+      assert(heading2.children[0].type == 'Str');
+      assert(heading2.children[0].raw == 'Headings');
     });
 
     it('should parse @<code>{} as a Code', function () {
       const result = parse(`@<code>{var a = 1}`);
       const script = result.children[0];
       script.children.forEach(code => {
-        assert.equal(code.type, 'Code');
+        assert(code.type == 'Code');
       });
     });
 
@@ -98,8 +98,8 @@ another paragraph`);
 `);
       const script = result.children[0];
       assert(script.children[0].raw.startsWith('first line'));
-      assert.equal(script.children[1].type, 'Break');
-      assert.equal(script.children[1].raw, '@<br>{}');
+      assert(script.children[1].type == 'Break');
+      assert(script.children[1].raw == '@<br>{}');
       assert(script.children[2].raw.startsWith('second line'));
     });
 
@@ -110,7 +110,7 @@ paragraph
 #@# !!!
 
 another paragraph`);
-      assert.equal(result.children.length, 2);
+      assert(result.children.length == 2);
       assert(!result.children[0].raw.includes('???'));
       assert.deepEqual(result.children.map(node => node.type),
                        ['Paragraph', 'Paragraph']);
