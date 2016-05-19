@@ -14,7 +14,38 @@ aaaa`);
     it('should parse text as a Paragraph', function () {
       const result = parse(`test`);
       const paragraph = result.children[0];
-      assert.equal(paragraph.type, 'Paragraph');
+      assert.deepEqual(paragraph, {
+        type: 'Paragraph',
+        raw: 'test',
+        range: [0, 4],
+        loc: {
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 4,
+          },
+        },
+        children: [
+          {
+            type: 'Str',
+            raw: 'test',
+            range: [0, 4],
+            loc: {
+              start: {
+                line: 1,
+                column: 0,
+              },
+              end: {
+                line: 1,
+                column: 4,
+              },
+            },
+          },
+        ],
+      });
     });
 
     it('should parse consecutive lines as a Paragraph', function () {
