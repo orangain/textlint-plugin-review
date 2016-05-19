@@ -119,8 +119,15 @@ function parseHeading(chunk) {
   const label = match[2].trim();
   const labelOffset = line.text.indexOf(label);
   assert(labelOffset >= 0);
-  const strNode = createStrNode(label, line.startIndex + labelOffset, line.lineNumber, labelOffset);
-  return createHeadingNode(line.text, depth, line.startIndex, line.lineNumber, strNode);
+  const strNode = createNode(Syntax.Str, label, line.startIndex + labelOffset,
+                             line.lineNumber, labelOffset);
+
+  const heading = createNodeFromLine(line, Syntax.Heading);
+  heading.depth = depth;
+  heading.label = label;
+  heading.children = [strNode];
+
+  return heading;
 }
 
 function parseList(prefixRegex, chunk) {
@@ -328,45 +335,51 @@ function parseImage(blockName, blockArgs, chunk) {
  * @param {number} [startColumn=0] - Start column in the line
  * @return {[TxtNode]} TxtNodes in the line
  */
-function parseText(text, startIndex, lineNumber, startColumn) {
-  startColumn = startColumn || 0;
-  var nodes = [];
-  var match;
+function parseText(text, startIndex, lineNumber, startColumn=0) {
+
+  const createInlineNode = function (type, text) {
+    return createNode(type, text, startIndex, lineNumber, startColumn);
+  };
+
+  const createInlineStrNode = function (text, offset=0) {
+    return createNode(Syntax.Str, text, startIndex + offset, lineNumber, startColumn + offset);
+  };
+
+  const nodes = [];
+  let match;
 
   // TODO: Support escape character \} in { }
   while (match = text.match(/@<(\w+)>\{(.*?)\}/)) {
     if (match.index > 0) {
-      let node = createStrNode(text.substr(0, match.index), startIndex, lineNumber, startColumn);
+      const node = createInlineStrNode(text.substr(0, match.index));
       nodes.push(node);
       startIndex += node.raw.length;
       startColumn += node.raw.length;
     }
 
-    var markup = { name: match[1], content: match[2] };
+    const markup = { name: match[1], content: match[2] };
     if (markup.name == 'code') {
-      let node = createNode(Syntax.Code, match[0], startIndex, lineNumber, startColumn);
+      const node = createInlineNode(Syntax.Code, match[0]);
       nodes.push(node);
     } else if (markup.name == 'href') {
-      let pieces = markup.content.split(/,/, 2);
-      let url = pieces[0];
-      let label = pieces.length == 2 ? pieces[1] : url;
+      const pieces = markup.content.split(/,/, 2);
+      const url = pieces[0];
+      const label = pieces.length == 2 ? pieces[1] : url;
 
-      let linkNode = createNode(Syntax.Link, match[0], startIndex, lineNumber, startColumn);
-      let labelOffset = match[0].indexOf(label);
+      const linkNode = createInlineNode(Syntax.Link, match[0]);
+      const labelOffset = match[0].indexOf(label);
       assert(labelOffset >= 0);
-      let strNode = createStrNode(label, startIndex + labelOffset,
-                                  lineNumber, startColumn + labelOffset);
+      const strNode = createInlineStrNode(label, labelOffset);
       linkNode.children = [strNode];
       nodes.push(linkNode);
     } else if (markup.name == 'br') {
-      let emptyBreakNode = createBRNode(match[0], startIndex, lineNumber, startColumn);
+      const emptyBreakNode = createInlineNode(Syntax.Break, match[0]);
       nodes.push(emptyBreakNode);
     } else if (['img', 'list', 'hd', 'table', 'fn'].indexOf(markup.name) >= 0) {
       // do nothing
     } else {
-      let offset = ('@<' + markup.name + '>{').length;
-      let node = createStrNode(markup.content, startIndex + offset,
-                               lineNumber, startColumn + offset);
+      const offset = ('@<' + markup.name + '>{').length;
+      const node = createInlineStrNode(markup.content, offset);
       nodes.push(node);
     }
 
@@ -376,7 +389,7 @@ function parseText(text, startIndex, lineNumber, startColumn) {
   }
 
   if (text.length) {
-    let node = createStrNode(text, startIndex, lineNumber, startColumn);
+    const node = createInlineStrNode(text);
     nodes.push(node);
   }
 
@@ -432,44 +445,4 @@ function createNode(type, text, startIndex, lineNumber, startColumn) {
       },
     },
   };
-}
-
-/**
- * create StrNode.
- * @param {string} text - Raw text of node
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {number} [startColumn=0] - Start column in the line
- * @return {TxtNode} Created StrNode
- */
-function createStrNode(text, startIndex, lineNumber, startColumn) {
-  return createNode(Syntax.Str, text, startIndex, lineNumber, startColumn);
-}
-
-/**
- * create BreakNode.
- * @param {string} text - Raw text of line break
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {number} [startColumn=0] - Start column in the line
- * @return {TxtNode} Created BRNode
- */
-function createBRNode(text, startIndex, lineNumber, startColumn) {
-  return createNode(Syntax.Break, text, startIndex, lineNumber, startColumn);
-}
-
-/**
- * create HeaderNode.
- * @param {string} text - Raw text of node
- * @param {number} depth - Depth of heading
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {TxtNode} strNode - Child StrNode
- * @return {TxtNode} Created StrNode
- */
-function createHeadingNode(text, depth, startIndex, lineNumber, strNode) {
-  var node = createNode(Syntax.Heading, text, startIndex, lineNumber);
-  node.depth = depth;
-  node.children = [strNode];
-  return node;
 }
