@@ -16,10 +16,10 @@ export function parseBlockArg(type, blockArg, line) {
   }
 
   const startColumn = blockArg.startColumn;
-  const argNode = createNode(type, argText, line.startIndex + startColumn,
-                              line.lineNumber, startColumn);
+  const argNode = createInlineNode(type, argText, line.startIndex + startColumn,
+                                   line.lineNumber, startColumn);
   argNode.children = parseText(argText, line.startIndex + startColumn,
-                                line.lineNumber, startColumn);
+                               line.lineNumber, startColumn);
   return argNode;
 }
 
@@ -41,13 +41,15 @@ export function parseLine(line) {
  * @return {[TxtNode]} TxtNodes in the line
  */
 export function parseText(text, startIndex, lineNumber, startColumn=0) {
+  assert(!text.match(/[\r\n]/));
 
-  const createInlineNode = function (type, text) {
-    return createNode(type, text, startIndex, lineNumber, startColumn);
+  const createInlineNonStrNode = function (type, text) {
+    return createInlineNode(type, text, startIndex, lineNumber, startColumn);
   };
 
   const createInlineStrNode = function (text, offset=0) {
-    return createNode(Syntax.Str, text, startIndex + offset, lineNumber, startColumn + offset);
+    return createInlineNode(Syntax.Str, text, startIndex + offset, lineNumber,
+                            startColumn + offset);
   };
 
   const nodes = [];
@@ -64,21 +66,21 @@ export function parseText(text, startIndex, lineNumber, startColumn=0) {
 
     const markup = { name: match[1], content: match[2] };
     if (markup.name == 'code') {
-      const node = createInlineNode(Syntax.Code, match[0]);
+      const node = createInlineNonStrNode(Syntax.Code, match[0]);
       nodes.push(node);
     } else if (markup.name == 'href') {
       const pieces = markup.content.split(/,/, 2);
       const url = pieces[0];
       const label = pieces.length == 2 ? pieces[1] : url;
 
-      const linkNode = createInlineNode(Syntax.Link, match[0]);
+      const linkNode = createInlineNonStrNode(Syntax.Link, match[0]);
       const labelOffset = match[0].indexOf(label);
       assert(labelOffset >= 0);
       const strNode = createInlineStrNode(label, labelOffset);
       linkNode.children = [strNode];
       nodes.push(linkNode);
     } else if (markup.name == 'br') {
-      const emptyBreakNode = createInlineNode(Syntax.Break, match[0]);
+      const emptyBreakNode = createInlineNonStrNode(Syntax.Break, match[0]);
       nodes.push(emptyBreakNode);
     } else if (['img', 'list', 'hd', 'table', 'fn'].indexOf(markup.name) >= 0) {
       // do nothing
@@ -108,9 +110,40 @@ export function parseText(text, startIndex, lineNumber, startColumn=0) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromChunk(chunk, type) {
-  const firstLine = chunk.lines[0];
   type = type || Syntax[chunk.type];
-  return createNode(type, chunk.raw, firstLine.startIndex, firstLine.lineNumber);
+  return createNodeFromLinesInChunk(type, chunk.lines, chunk);
+}
+
+/**
+ * create TxtNode from lines in a chunk.
+ * @param {string} type - Type of node
+ * @param {[Line]} lines - lines in a chunk
+ * @param {Chunk} chunk - A chunk
+ * @return {TxtNode} Created TxtNode
+ */
+export function createNodeFromLinesInChunk(type, lines, chunk) {
+  const firstLine = lines[0];
+  const lastLine = lines[lines.length - 1];
+  const chunkStartIndex = chunk.lines[0].startIndex;
+  const startIndex = firstLine.startIndex;
+  const endIndex = lastLine.startIndex + lastLine.text.length;
+  const text = chunk.raw.slice(startIndex - chunkStartIndex, endIndex - chunkStartIndex);
+
+  return {
+    type: type,
+    raw: text,
+    range: [startIndex, endIndex],
+    loc: {
+      start: {
+        line: firstLine.lineNumber,
+        column: 0,
+      },
+      end: {
+        line: lastLine.lineNumber,
+        column: lastLine.text.length,
+      },
+    },
+  };
 }
 
 /**
@@ -120,11 +153,11 @@ export function createNodeFromChunk(chunk, type) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromLine(line, type) {
-  return createNode(type, line.text, line.startIndex, line.lineNumber);
+  return createInlineNode(type, line.text, line.startIndex, line.lineNumber);
 }
 
 /**
- * create TxtNode.
+ * create inline TxtNode.
  * @param {string} type - Type of node
  * @param {string} text - Raw text of node
  * @param {number} startIndex - Start index in the document
@@ -132,8 +165,8 @@ export function createNodeFromLine(line, type) {
  * @param {number} [startColumn=0] - Start column in the line
  * @return {TxtNode} Created TxtNode
  */
-export function createNode(type, text, startIndex, lineNumber, startColumn) {
-  startColumn = startColumn || 0;
+export function createInlineNode(type, text, startIndex, lineNumber, startColumn=0) {
+  assert(!text.match(/[\r\n]/));
 
   return {
     type: type,

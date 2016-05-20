@@ -53,10 +53,17 @@ aaaa`);
 paragraph`);
       const paragraph = result.children[0];
       assert(paragraph.type == 'Paragraph');
+      assert(paragraph.raw == `test
+paragraph`);
+      assert(paragraph.loc.start.line == 1);
+      assert(paragraph.loc.start.column == 0);
+      assert(paragraph.loc.end.line == 2);
+      assert(paragraph.loc.end.column == 9);
       assert(paragraph.children.length == 2);
-      paragraph.children.forEach(str => {
-        assert(str.type == 'Str');
-      });
+      assert.deepEqual(paragraph.children.map(node => node.type),
+                       ['Str', 'Str']);
+      assert.deepEqual(paragraph.children.map(node => node.raw),
+                       ['test', 'paragraph']);
     });
 
     it('should parse separated lines as each Paragraph', function () {
@@ -141,14 +148,13 @@ let x = 0;
 
 second line`);
       assert(result.children.length == 3);
-      assert(result.children[0].raw == 'first line\n');
+      assert(result.children[0].raw == 'first line');
       assert(result.children[2].raw == 'second line');
       const list = result.children[1];
       assert(list.type == 'CodeBlock');
       assert(list.raw == `//list[foo][Assign 0 to x]{
 let x = 0;
-//}
-`);
+//}`);
       assert(list.children.length == 1);
       const caption = list.children[0];
       assert(caption.type == 'Caption');
@@ -161,7 +167,7 @@ let x = 0;
 
 second line`);
       assert(result.children.length == 3);
-      assert(result.children[0].raw == 'first line\n');
+      assert(result.children[0].raw == 'first line');
       assert(result.children[2].raw == 'second line');
     });
 

@@ -1,6 +1,6 @@
 'use strict';
 import { Syntax } from './mapping';
-import { parseText, parseBlockArg, createNodeFromChunk, createNode } from './parser-utils';
+import { parseText, parseBlockArg, createNodeFromChunk, createInlineNode } from './parser-utils';
 
 export const BlockParsers = {
   table: withCaption(1, parseTable),
@@ -86,8 +86,8 @@ function parseTableContent(line) {
       continue;
     }
 
-    const cellNode = createNode(Syntax.TableCell, cellContent, line.startIndex + startColumn,
-                                line.lineNumber, startColumn);
+    const cellNode = createInlineNode(Syntax.TableCell, cellContent, line.startIndex + startColumn,
+                                      line.lineNumber, startColumn);
     cellNode.children = parseText(cellContent, line.startIndex + startColumn,
                                   line.lineNumber, startColumn);
     nodes.push(cellNode);

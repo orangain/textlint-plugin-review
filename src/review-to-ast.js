@@ -17,16 +17,14 @@ export function parse(text) {
   var prevNode = ast;
   traverse(ast, {
     enter(node) {
-      if (node.type != Syntax.Document) {
-        try {
-          assert.deepEqual(node.raw, text.slice(node.range[0], node.range[1]));
-        } catch (ex) {
-          console.log('type: %s, line: %s, column: %s',
-                      prevNode.type, prevNode.loc.start.line, prevNode.loc.start.column);
-          console.log('type: %s, line: %s, column: %s',
-                      node.type, node.loc.start.line, node.loc.start.column);
-          throw ex;
-        }
+      try {
+        assert.deepEqual(node.raw, text.slice(node.range[0], node.range[1]));
+      } catch (ex) {
+        console.log('type: %s, line: %s, column: %s',
+                    prevNode.type, prevNode.loc.start.line, prevNode.loc.start.column);
+        console.log('type: %s, line: %s, column: %s',
+                    node.type, node.loc.start.line, node.loc.start.column);
+        throw ex;
       }
 
       prevNode = node;
