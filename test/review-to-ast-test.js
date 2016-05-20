@@ -76,6 +76,25 @@ another paragraph`);
                        ['Paragraph', 'Paragraph']);
     });
 
+    it('should not split paragraph with comments', function () {
+      const result = parse(`test
+paragraph
+#@# This is a comment
+continuation line`);
+      assert(result.raw == `test
+paragraph
+#@# This is a comment
+continuation line`);
+      assert(result.children.length == 1);
+      const paragraph = result.children[0];
+      assert.deepEqual(paragraph.children.map(node => node.type),
+                       ['Str', 'Str', 'Str']);
+      assert.deepEqual(paragraph.children.map(node => node.raw),
+                       ['test', 'paragraph', 'continuation line']);
+      assert.deepEqual(paragraph.children.map(node => node.loc.start.line),
+                       [1, 2, 4]);
+    });
+
     it('should parse equal signs as headings', function () {
       const result = parse(`={ch01} Test
 
