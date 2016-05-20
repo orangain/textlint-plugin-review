@@ -44,7 +44,7 @@ export function parseHeading(chunk) {
   const strNode = createInlineNode(Syntax.Str, label, line.startIndex + labelOffset,
                              line.lineNumber, labelOffset);
 
-  const heading = createNodeFromLine(line, Syntax.Heading);
+  const heading = createNodeFromLine(Syntax.Heading, line);
   heading.depth = depth;
   heading.label = label;
   heading.children = [strNode];
@@ -61,7 +61,7 @@ export function parseList(prefixRegex, chunk) {
   const node = createNodeFromChunk(chunk);
   node.children = [];
   chunk.lines.forEach(line => {
-    const itemNode = createNodeFromLine(line, Syntax.ListItem);
+    const itemNode = createNodeFromLine(Syntax.ListItem, line);
     itemNode.children = [];
     const itemText = line.text.replace(prefixRegex, '');
     const startColumn = line.text.length - itemText.length;

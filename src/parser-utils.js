@@ -185,12 +185,12 @@ export function createNodeFromLinesInChunk(type, lines, chunk) {
 }
 
 /**
- * create TxtNode from line.
+ * create TxtNode from single line.
  * @param {Line} line - A line
  * @param {string} type - Type of node
  * @return {TxtNode} Created TxtNode
  */
-export function createNodeFromLine(line, type) {
+export function createNodeFromLine(type, line) {
   return createInlineNode(type, line.text, line.startIndex, line.lineNumber);
 }
 
