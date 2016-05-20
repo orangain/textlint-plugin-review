@@ -15,7 +15,8 @@
   "description": "textlint Re:VIEW processsor plugin.",
   "main": "lib/index.js",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "directories": {
     "test": "test"
