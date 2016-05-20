@@ -3,33 +3,58 @@ import { Syntax } from './mapping';
 import { parseText, parseBlockArg, createNodeFromChunk, createNode } from './parser-utils';
 
 export const BlockParsers = {
-  table: parseTable,
+  table: withCaption(1, parseTable),
   footnote: parseFootnote,
-  list: (blockName, blockArgs, chunk) => parseCodeBlock(1, blockName, blockArgs, chunk),
-  listnum: (blockName, blockArgs, chunk) => parseCodeBlock(1, blockName, blockArgs, chunk),
-  emlist: (blockName, blockArgs, chunk) => parseCodeBlock(0, blockName, blockArgs, chunk),
-  emlistnum: (blockName, blockArgs, chunk) => parseCodeBlock(0, blockName, blockArgs, chunk),
-  source: (blockName, blockArgs, chunk) => parseCodeBlock(null, blockName, blockArgs, chunk),
-  image: parseImage,
+
+  list: withCaption(1, parseCodeBlock),
+  listnum: withCaption(1, parseCodeBlock),
+  emlist: withCaption(0, parseCodeBlock),
+  emlistnum: withCaption(0, parseCodeBlock),
+  source: parseCodeBlock,
+  cmd: parseCodeBlock,
+
+  image: withCaption(1, parseImage),
+  indepimage: withCaption(1, parseImage),
+  numberlessimage: withCaption(1, parseImage),
+  graph: withCaption(2, parseImage),
+  imgtable: withCaption(1, parseImage),
 };
 
 /**
+ * parse block with caption.
+ * @param {number} captionIndex - index of caption in block args
+ * @param {function} blockParser - Parser function of a block
+ * @return {TxtNode} block node
+ */
+function withCaption(captionIndex, blockParser) {
+  return function (block) {
+    const node = blockParser(block);
+
+    if (captionIndex != null) {
+      const blockArg = block.args[captionIndex];
+      if (blockArg) {
+        const caption = parseBlockArg(Syntax.Caption, blockArg, block.chunk.lines[0]);
+        if (caption) {
+          node.children = node.children || [];
+          node.children.unshift(caption);
+        }
+      }
+    }
+
+    return node;
+  };
+}
+
+/**
  * parse table block.
- * @param {string} blockName - Name of the block, should be '//footnote'
- * @param {[Arg]} blockArgs - Args of the block
- * @param {Chunk} chunk - Chunk to parse
+ * @param {Block} block - Block to parse
  * @return {TxtNode} Table node
  */
-export function parseTable(blockName, blockArgs, chunk) {
-  const node = createNodeFromChunk(chunk, Syntax.Table);
+function parseTable(block) {
+  const node = createNodeFromChunk(block.chunk, Syntax.Table);
   node.children = [];
 
-  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
-  if (caption) {
-    node.children.push(caption);
-  }
-
-  chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
+  block.chunk.lines.slice(1, block.chunk.lines.length - 1).forEach(line => {
     Array.prototype.push.apply(node.children, parseTableContent(line));
   });
 
@@ -73,14 +98,12 @@ function parseTableContent(line) {
 
 /**
  * parse footnote block.
- * @param {string} blockName - Name of the block, should be '//footnote'
- * @param {[Arg]} blockArgs - Args of the block
- * @param {Chunk} chunk - Chunk to parse
- * @return {TxtNode} FootnoteNode
+ * @param {Block} block - Block to parse
+ * @return {TxtNode} Footnote node
  */
-export function parseFootnote(blockName, blockArgs, chunk) {
-  const node = createNodeFromChunk(chunk, Syntax.Footnote);
-  const footnoteParagraph = parseBlockArg(Syntax.Paragraph, blockArgs[1], chunk.lines[0]);
+function parseFootnote(block) {
+  const node = createNodeFromChunk(block.chunk, Syntax.Footnote);
+  const footnoteParagraph = parseBlockArg(Syntax.Paragraph, block.args[1], block.chunk.lines[0]);
   if (footnoteParagraph) {
     node.children = [footnoteParagraph];
   }
@@ -90,35 +113,18 @@ export function parseFootnote(blockName, blockArgs, chunk) {
 
 /**
  * parse code block, e.g //list, //emlist, //source etc.
- * @param {number} captionIndex - Index of caption in blockArgs, can be null if there is no caption
- * @param {string} blockName - Name of the block, should be '//footnote'
- * @param {[Arg]} blockArgs - Args of the block
- * @param {Chunk} chunk - Chunk to parse
+ * @param {Block} block - Block to parse
  * @return {TxtNode} CodeBlock node
  */
-export function parseCodeBlock(captionIndex, blockName, blockArgs, chunk) {
-  const node = createNodeFromChunk(chunk, Syntax.CodeBlock);
-  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
-  if (caption) {
-    node.children = [caption];
-  }
-
-  return node;
+function parseCodeBlock(block) {
+  return createNodeFromChunk(block.chunk, Syntax.CodeBlock);
 }
 
 /**
  * parse image block.
- * @param {string} blockName - Name of the block, should be '//footnote'
- * @param {[Arg]} blockArgs - Args of the block
- * @param {Chunk} chunk - Chunk to parse
+ * @param {Block} block - Block to parse
  * @return {TxtNode} Image node
  */
-export function parseImage(blockName, blockArgs, chunk) {
-  const node = createNodeFromChunk(chunk, Syntax.Image);
-  const caption = parseBlockArg(Syntax.Caption, blockArgs[1], chunk.lines[0]);
-  if (caption) {
-    node.children = [caption];
-  }
-
-  return node;
+function parseImage(block) {
+  return createNodeFromChunk(block.chunk, Syntax.Image);
 }

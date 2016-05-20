@@ -10,17 +10,17 @@ import { Syntax } from './mapping';
  * @return {TxtNode}
  */
 export function parseBlockArg(type, blockArg, line) {
-  const captionText = blockArg.value;
-  if (!captionText) {
+  const argText = blockArg.value;
+  if (!argText) {
     return null;
   }
 
   const startColumn = blockArg.startColumn;
-  const caption = createNode(type, captionText, line.startIndex + startColumn,
+  const argNode = createNode(type, argText, line.startIndex + startColumn,
                               line.lineNumber, startColumn);
-  caption.children = parseText(captionText, line.startIndex + startColumn,
+  argNode.children = parseText(argText, line.startIndex + startColumn,
                                 line.lineNumber, startColumn);
-  return caption;
+  return argNode;
 }
 
 /**

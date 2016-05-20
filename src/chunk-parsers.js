@@ -81,15 +81,18 @@ export function parseList(prefixRegex, chunk) {
 export function parseBlock(chunk) {
   const line = chunk.lines[0];
   const match = line.text.match(/^\/\/(\w+)(.*)\{?$/);
-  const blockName = match[1];
-  const blockArgs = parseBlockArgs(match[2], 2 + blockName.length);
-  const parser = BlockParsers[blockName];
+  const block = {
+    name: match[1],
+    args: parseBlockArgs(match[2], 2 + match[1].length),
+    chunk: chunk,
+  };
+  const parser = BlockParsers[block.name];
 
   if (!parser) {
     return null;
   }
 
-  return parser(blockName, blockArgs, chunk);
+  return parser(block);
 }
 
 /**
