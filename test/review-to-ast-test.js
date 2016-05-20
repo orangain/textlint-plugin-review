@@ -53,10 +53,17 @@ aaaa`);
 paragraph`);
       const paragraph = result.children[0];
       assert(paragraph.type == 'Paragraph');
+      assert(paragraph.raw == `test
+paragraph`);
+      assert(paragraph.loc.start.line == 1);
+      assert(paragraph.loc.start.column == 0);
+      assert(paragraph.loc.end.line == 2);
+      assert(paragraph.loc.end.column == 9);
       assert(paragraph.children.length == 2);
-      paragraph.children.forEach(str => {
-        assert(str.type == 'Str');
-      });
+      assert.deepEqual(paragraph.children.map(node => node.type),
+                       ['Str', 'Str']);
+      assert.deepEqual(paragraph.children.map(node => node.raw),
+                       ['test', 'paragraph']);
     });
 
     it('should parse separated lines as each Paragraph', function () {
@@ -141,14 +148,13 @@ let x = 0;
 
 second line`);
       assert(result.children.length == 3);
-      assert(result.children[0].raw == 'first line\n');
+      assert(result.children[0].raw == 'first line');
       assert(result.children[2].raw == 'second line');
       const list = result.children[1];
       assert(list.type == 'CodeBlock');
       assert(list.raw == `//list[foo][Assign 0 to x]{
 let x = 0;
-//}
-`);
+//}`);
       assert(list.children.length == 1);
       const caption = list.children[0];
       assert(caption.type == 'Caption');
@@ -161,7 +167,7 @@ let x = 0;
 
 second line`);
       assert(result.children.length == 3);
-      assert(result.children[0].raw == 'first line\n');
+      assert(result.children[0].raw == 'first line');
       assert(result.children[2].raw == 'second line');
     });
 
@@ -340,6 +346,75 @@ System V
       const caption = image.children[0];
       assert(caption.type == 'Caption');
       assert(caption.raw == 'a brief history of UNIX-like OS');
+    });
+
+    it('should parse lead block as block having paragraphs', function () {
+      const result = parse(`
+//lead{
+In the chapter, I introduce brief summary of the book,
+and I show the way how to write a program in Linux.
+//}
+`);
+      assert(result.children.length == 1);
+      const lead = result.children[0];
+      assert(lead.type == 'Block');
+      assert(lead.children.length == 1);
+      assert(lead.children[0].type == 'Paragraph');
+      assert(lead.children[0].loc.start.line == 3);
+      assert(lead.children[0].loc.start.column == 0);
+      assert(lead.children[0].loc.end.line == 4);
+      assert(lead.children[0].loc.end.column == 51);
+      assert(lead.children[0].raw == `In the chapter, I introduce brief summary of the book,
+and I show the way how to write a program in Linux.`);
+      assert(lead.children[0].children.length == 2);
+    });
+
+    it('should parse quote block', function () {
+      const result = parse(`
+//quote{
+Seeing is believing.
+//}
+`);
+      assert(result.children.length == 1);
+      const quote = result.children[0];
+      assert(quote.type == 'BlockQuote');
+      assert(quote.children.length == 1);
+      assert(quote.children[0].type == 'Paragraph');
+      assert(quote.children[0].raw == 'Seeing is believing.');
+      assert(quote.children[0].children.length == 1);
+    });
+
+    it('should parse quote block with two paragraphs', function () {
+      const result = parse(`
+//quote{
+Seeing is believing.
+
+But feeling is the truth.
+//}
+`);
+      assert(result.children.length == 1);
+      const quote = result.children[0];
+      assert(quote.type == 'BlockQuote');
+      assert(quote.children.length == 2);
+      assert.deepEqual(quote.children.map(node => node.type), ['Paragraph', 'Paragraph']);
+      assert.deepEqual(quote.children.map(node => node.raw), [
+        'Seeing is believing.',
+        'But feeling is the truth.',
+      ]);
+    });
+
+    it('should parse short column block', function () {
+      const result = parse(`
+//info{
+You need to install python.
+//}
+`);
+      assert(result.children.length == 1);
+      const lead = result.children[0];
+      assert(lead.type == 'Block');
+      assert(lead.children.length == 1);
+      assert(lead.children[0].type == 'Paragraph');
+      assert(lead.children[0].raw == `You need to install python.`);
     });
   });
 });

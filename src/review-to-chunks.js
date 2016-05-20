@@ -1,6 +1,13 @@
 'use strict';
 
-import { ChunkTypes } from './mapping';
+export const ChunkTypes = {
+  Paragraph: 'Paragraph',
+  Heading: 'Heading',
+  UnorderedList: 'UnorderedList',
+  OrderedList: 'OrderedList',
+  DefinitionList: 'DefinitionList',
+  Block: 'Block',
+};
 
 /**
  * parse text and return array of chunks.

@@ -14,6 +14,7 @@ export const Syntax = {
   TableCell: 'ListItem',
   CodeBlock: 'CodeBlock',
   Image: 'Image',
+  Quote: 'BlockQuote',
 
   // inline
   Str: 'Str',
@@ -22,15 +23,8 @@ export const Syntax = {
   Link: 'Link',
 
   // specific to review-plugin
-  Footnote: 'Footnote',
-  Caption: 'Caption',
-};
-
-export const ChunkTypes = {
-  Paragraph: 'Paragraph',
-  Heading: 'Heading',
-  UnorderedList: 'UnorderedList',
-  OrderedList: 'OrderedList',
-  DefinitionList: 'DefinitionList',
-  Block: 'Block',
+  Footnote: 'Footnote', // footnote
+  Caption: 'Caption', // caption text of image, table and code block
+  Lead: 'Block', // corespond to review's block having no special meanings
+  ShortColumn: 'Block',
 };
