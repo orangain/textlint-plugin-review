@@ -24,6 +24,44 @@ export function parseBlockArg(type, blockArg, line) {
 }
 
 /**
+ * parse a block with content. which is parsed as paragraphs.
+ * @param {Block} block - line to parse
+ * @param {string} type - Type of node
+ * @return {[TxtNode]} TxtNode
+ */
+export function parseBlockWithContent(block, type) {
+  const chunk = block.chunk;
+  const node = createNodeFromChunk(chunk, type);
+  node.children = [];
+
+  let lines = [];
+  const flushParagraph = function () {
+    if (lines.length > 0) {
+      const paragraph = createNodeFromLinesInChunk(Syntax.Paragraph, lines, chunk);
+      paragraph.children = [];
+      lines.forEach(line => {
+        Array.prototype.push.apply(paragraph.children, parseLine(line));
+      });
+      node.children.push(paragraph);
+    }
+
+    lines = [];
+  };
+
+  chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
+    if (line.text == '') {
+      flushParagraph();
+    } else {
+      lines.push(line);
+    }
+  });
+
+  flushParagraph();
+
+  return node;
+}
+
+/**
  * parse a line.
  * @param {Line} line - line to parse
  * @return {[TxtNode]} TxtNodes

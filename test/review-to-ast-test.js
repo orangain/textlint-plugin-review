@@ -347,5 +347,74 @@ System V
       assert(caption.type == 'Caption');
       assert(caption.raw == 'a brief history of UNIX-like OS');
     });
+
+    it('should parse lead block as block having paragraphs', function () {
+      const result = parse(`
+//lead{
+In the chapter, I introduce brief summary of the book,
+and I show the way how to write a program in Linux.
+//}
+`);
+      assert(result.children.length == 1);
+      const lead = result.children[0];
+      assert(lead.type == 'Block');
+      assert(lead.children.length == 1);
+      assert(lead.children[0].type == 'Paragraph');
+      assert(lead.children[0].loc.start.line == 3);
+      assert(lead.children[0].loc.start.column == 0);
+      assert(lead.children[0].loc.end.line == 4);
+      assert(lead.children[0].loc.end.column == 51);
+      assert(lead.children[0].raw == `In the chapter, I introduce brief summary of the book,
+and I show the way how to write a program in Linux.`);
+      assert(lead.children[0].children.length == 2);
+    });
+
+    it('should parse quote block', function () {
+      const result = parse(`
+//quote{
+Seeing is believing.
+//}
+`);
+      assert(result.children.length == 1);
+      const quote = result.children[0];
+      assert(quote.type == 'BlockQuote');
+      assert(quote.children.length == 1);
+      assert(quote.children[0].type == 'Paragraph');
+      assert(quote.children[0].raw == 'Seeing is believing.');
+      assert(quote.children[0].children.length == 1);
+    });
+
+    it('should parse quote block with two paragraphs', function () {
+      const result = parse(`
+//quote{
+Seeing is believing.
+
+But feeling is the truth.
+//}
+`);
+      assert(result.children.length == 1);
+      const quote = result.children[0];
+      assert(quote.type == 'BlockQuote');
+      assert(quote.children.length == 2);
+      assert.deepEqual(quote.children.map(node => node.type), ['Paragraph', 'Paragraph']);
+      assert.deepEqual(quote.children.map(node => node.raw), [
+        'Seeing is believing.',
+        'But feeling is the truth.',
+      ]);
+    });
+
+    it('should parse short column block', function () {
+      const result = parse(`
+//info{
+You need to install python.
+//}
+`);
+      assert(result.children.length == 1);
+      const lead = result.children[0];
+      assert(lead.type == 'Block');
+      assert(lead.children.length == 1);
+      assert(lead.children[0].type == 'Paragraph');
+      assert(lead.children[0].raw == `You need to install python.`);
+    });
   });
 });

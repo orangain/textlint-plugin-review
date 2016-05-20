@@ -1,10 +1,13 @@
 'use strict';
 import { Syntax } from './mapping';
-import { parseText, parseBlockArg, createNodeFromChunk, createInlineNode } from './parser-utils';
+import {
+  parseText, parseBlockArg, parseBlockWithContent, createNodeFromChunk, createInlineNode
+} from './parser-utils';
 
 export const BlockParsers = {
   table: withCaption(1, parseTable),
   footnote: parseFootnote,
+  quote: parseQuote,
 
   list: withCaption(1, parseCodeBlock),
   listnum: withCaption(1, parseCodeBlock),
@@ -18,6 +21,18 @@ export const BlockParsers = {
   numberlessimage: withCaption(1, parseImage),
   graph: withCaption(2, parseImage),
   imgtable: withCaption(1, parseImage),
+
+  lead: parseLead,
+  read: parseLead,
+
+  note: withCaption(0, parseShortColumn),
+  memo: withCaption(0, parseShortColumn),
+  tip: withCaption(0, parseShortColumn),
+  info: withCaption(0, parseShortColumn),
+  warning: withCaption(0, parseShortColumn),
+  important: withCaption(0, parseShortColumn),
+  caution: withCaption(0, parseShortColumn),
+  notice: withCaption(0, parseShortColumn),
 };
 
 /**
@@ -112,6 +127,15 @@ function parseFootnote(block) {
 }
 
 /**
+ * parse quote block.
+ * @param {Block} block - Block to parse
+ * @return {TxtNode} BlockQuote node
+ */
+function parseQuote(block) {
+  return parseBlockWithContent(block, Syntax.Quote);
+}
+
+/**
  * parse code block, e.g //list, //emlist, //source etc.
  * @param {Block} block - Block to parse
  * @return {TxtNode} CodeBlock node
@@ -127,4 +151,22 @@ function parseCodeBlock(block) {
  */
 function parseImage(block) {
   return createNodeFromChunk(block.chunk, Syntax.Image);
+}
+
+/**
+ * parse lead block.
+ * @param {Block} block - Block to parse
+ * @return {TxtNode} Block node
+ */
+function parseLead(block) {
+  return parseBlockWithContent(block, Syntax.Lead);
+}
+
+/**
+ * parse various short column block.
+ * @param {Block} block - Block to parse
+ * @return {TxtNode} Block node
+ */
+function parseShortColumn(block) {
+  return parseBlockWithContent(block, Syntax.ShortColumn);
 }
