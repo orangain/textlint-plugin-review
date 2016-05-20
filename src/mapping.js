@@ -25,12 +25,3 @@ export const Syntax = {
   Footnote: 'Footnote',
   Caption: 'Caption',
 };
-
-export const ChunkTypes = {
-  Paragraph: 'Paragraph',
-  Heading: 'Heading',
-  UnorderedList: 'UnorderedList',
-  OrderedList: 'OrderedList',
-  DefinitionList: 'DefinitionList',
-  Block: 'Block',
-};
