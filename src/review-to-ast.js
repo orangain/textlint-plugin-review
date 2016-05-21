@@ -2,7 +2,7 @@
 'use strict';
 import assert from 'assert';
 import { traverse } from 'txt-ast-traverse';
-import { isTxtAST } from 'textlint-ast-test';
+import { test as testTextlintAST } from 'textlint-ast-test';
 import { Syntax } from './mapping';
 import { parseAsChunks } from './review-to-chunks';
 import { ChunkParsers } from './chunk-parsers';
@@ -47,8 +47,7 @@ export function parse(text) {
 }
 
 function validateAST(ast, text, lines) {
-  //  AST
-  assert(isTxtAST(ast));
+  testTextlintAST(ast);
 
   let prevNode = ast;
   traverse(ast, {
