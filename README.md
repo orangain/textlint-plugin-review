@@ -11,7 +11,7 @@ What is textlint plugin? Please see https://github.com/textlint/textlint/blob/ma
 
 ## Usage
 
-Manually add text plugin to do following:
+Manually add review plugin to your `.textlintrc` like:
 
 ```
 {
@@ -21,7 +21,7 @@ Manually add text plugin to do following:
 }
 ```
 
-Lint Re:VIEW file with textlint
+Lint Re:VIEW file with textlint:
 
 ```
 $ textlint ch01.re
