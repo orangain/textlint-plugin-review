@@ -1,5 +1,5 @@
 'use strict';
-import assert from 'power-assert';
+import assert from 'assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
 import { parseText, parseLine } from './inline-parsers';
