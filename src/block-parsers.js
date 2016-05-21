@@ -39,10 +39,10 @@ export const BlockParsers = {
 };
 
 /**
- * parse block with caption.
+ * return new parser to parse block with caption.
  * @param {number} captionIndex - index of caption in block args
  * @param {function} blockParser - Parser function of a block
- * @return {TxtNode} block node
+ * @return {function} parser function
  */
 function withCaption(captionIndex, blockParser) {
   return function (block) {

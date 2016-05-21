@@ -50,13 +50,27 @@ const InlineParsers = {
   column:  inlineNonTextTagParser(Syntax.Reference),
   fn:      inlineNonTextTagParser(Syntax.Reference),
 
-  code:    parseCodeTag,
+  code:    withValue(inlineNonTextTagParser(Syntax.Code)),
+  comment: withValue(inlineNonTextTagParser(Syntax.Comment)),
   uchar:   inlineNonTextTagParser(Syntax.UnicodeChar),
   br:      inlineNonTextTagParser(Syntax.Break),
   icon:    inlineNonTextTagParser(Syntax.Icon),
   m:       inlineNonTextTagParser(Syntax.Math),
   raw:     inlineNonTextTagParser(Syntax.Raw),
 };
+
+/**
+ * get new inline tag parser to get value attribute.
+ * @param {function} inlineParser - Parser function of a inline tag
+ * @return {function} parser function
+ */
+function withValue(inlineParser) {
+  return (tag, context) => {
+    const node = inlineParser(tag, context);
+    node.value = unescapeValue(tag.content.raw, context);
+    return node;
+  };
+}
 
 /**
  * get non-text tag parser function.
@@ -102,18 +116,6 @@ function parseInlineTextTag(type, tag, context) {
   const strContext = offsetContext(context, tag.content.index);
   const strNode = createStrNode(tag.content.raw, strContext);
   node.children = [strNode];
-  return node;
-}
-
-/**
- * parse code tag, which has no child.
- * @param {Tag} tag - tag to parse
- * @param {Context} context - context of the node
- * @return {TxtNode}
- */
-function parseCodeTag(tag, context) {
-  const node = createInlineNode(Syntax.Code, tag.fullText, context);
-  node.value = unescapeValue(tag.content.raw, context);
   return node;
 }
 

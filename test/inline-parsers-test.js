@@ -137,5 +137,15 @@ describe('inline-parsers', function () {
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Reference', 'Str']);
     });
+
+    it('should parse comment tag as a Comment node', function () {
+      const nodes = parseText(`This is it@<comment>{TODO: fix this}.`, context);
+      assert(nodes.length == 3);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Str', 'Comment', 'Str']);
+      const comment = nodes[1];
+      assert(comment.raw == '@<comment>{TODO: fix this}');
+      assert(comment.value == 'TODO: fix this');
+    });
   });
 });
