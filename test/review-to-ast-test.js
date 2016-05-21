@@ -32,6 +32,7 @@ aaaa`);
           {
             type: 'Str',
             raw: 'test',
+            value: 'test',
             range: [0, 4],
             loc: {
               start: {
@@ -102,6 +103,7 @@ continuation line`);
       const heading1 = result.children[0];
       assert(heading1.type == 'Header');
       assert(heading1.depth == 1);
+      assert(heading1.raw == '={ch01} Test');
       assert(heading1.children[0].type == 'Str');
       assert(heading1.children[0].raw == 'Test');
       const heading2 = result.children[result.children.length - 1];
@@ -260,6 +262,18 @@ Name	Value
       assert(footnote.raw == '//footnote[foo][This is a footnote text.]');
       assert(footnote.children[0].type == 'Paragraph');
       assert(footnote.children[0].raw == 'This is a footnote text.');
+    });
+
+    it('should parse footnote having inline tags', function () {
+      const result = parse(`//footnote[foo][See: @<href>{http://example.com/}.]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      assert(footnote.raw == '//footnote[foo][See: @<href>{http://example.com/}.]');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.loc.start.column == 16);
+      assert(paragraph.raw == 'See: @<href>{http://example.com/}.');
+      assert(paragraph.children.length == 3);
     });
 
     it('should parse lines starting with * as a List', function () {

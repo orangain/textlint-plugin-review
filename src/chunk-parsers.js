@@ -3,7 +3,7 @@ import assert from 'power-assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
 import {
-  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createInlineNode
+  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createStrNode
 } from './parser-utils';
 
 export const ChunkParsers = {
@@ -35,13 +35,14 @@ export function parseParagraph(chunk) {
  * @return {TxtNode} Heading node
  */
 export function parseHeading(chunk) {
+  assert(chunk.lines.length == 1);
   const line = chunk.lines[0];
   const match = line.text.match(/(=+)\S*\s*(.*)/);  // \S* skip [column] and {ch01}
   const depth = match[1].length;
   const label = match[2].trim();
   const labelOffset = line.text.indexOf(label);
   assert(labelOffset >= 0);
-  const strNode = createInlineNode(Syntax.Str, label, line.startIndex + labelOffset,
+  const strNode = createStrNode(label, label, line.startIndex + labelOffset,
                              line.lineNumber, labelOffset);
 
   const heading = createNodeFromLine(Syntax.Heading, line);

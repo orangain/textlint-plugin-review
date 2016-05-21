@@ -70,6 +70,142 @@ export function parseLine(line) {
   return parseText(line.text, line.startIndex, line.lineNumber);
 }
 
+const InlineParsers = {
+  // text tags
+  kw:      inlineTextTagParser(Syntax.Keyword),
+  bou:     inlineTextTagParser(Syntax.Bouten),
+  ami:     inlineTextTagParser(Syntax.Amikake),
+  u:       inlineTextTagParser(Syntax.Underline),
+  b:       inlineTextTagParser(Syntax.Bold),
+  i:       inlineTextTagParser(Syntax.Italic),
+  strong:  inlineTextTagParser(Syntax.Strong),
+  em:      inlineTextTagParser(Syntax.Emphasis),
+  tt:      inlineTextTagParser(Syntax.Teletype),
+  tti:     inlineTextTagParser(Syntax.TeletypeItalic),
+  ttb:     inlineTextTagParser(Syntax.TeletypeBold),
+  tcy:     inlineTextTagParser(Syntax.TateChuYoko),
+
+  // partially text tags
+  ruby:    parseRubyTag,
+  href:    parseHrefTag,
+
+  // non-text tags
+  chap:    inlineNonTextTagParser(Syntax.Reference),
+  title:   inlineNonTextTagParser(Syntax.Reference),
+  chapref: inlineNonTextTagParser(Syntax.Reference),
+  list:    inlineNonTextTagParser(Syntax.Reference),
+  img:     inlineNonTextTagParser(Syntax.Reference),
+  table:   inlineNonTextTagParser(Syntax.Reference),
+  hd:      inlineNonTextTagParser(Syntax.Reference),
+  column:  inlineNonTextTagParser(Syntax.Reference),
+  fn:      inlineNonTextTagParser(Syntax.Reference),
+
+  code:    inlineNonTextTagParser(Syntax.Code),
+  uchar:   inlineNonTextTagParser(Syntax.UnicodeChar),
+  br:      inlineNonTextTagParser(Syntax.Break),
+  icon:    inlineNonTextTagParser(Syntax.Icon),
+  m:       inlineNonTextTagParser(Syntax.Math),
+  raw:     inlineNonTextTagParser(Syntax.Raw),
+};
+
+/**
+ * get non-text tag parser function.
+ * @param {string} type - type of tag
+ * @return {function} parser function
+ */
+function inlineNonTextTagParser(type) {
+  return (tag, startIndex, lineNumber, startColumn) =>
+    parseInlineNonTextTag(type, tag, startIndex, lineNumber, startColumn);
+}
+
+/**
+ * get text tag parser function.
+ * @param {string} type - type of tag
+ * @return {function} parser function
+ */
+function inlineTextTagParser(type) {
+  return (tag, startIndex, lineNumber, startColumn) =>
+    parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn);
+}
+
+/**
+ * parse non-text tag, which has no child.
+ * @param {string} type - type of tag
+ * @param {Tag} tag - tag to parse
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @param {number} startColumn - Start column in the line
+ * @return {TxtNode}
+ */
+function parseInlineNonTextTag(type, tag, startIndex, lineNumber, startColumn) {
+  const node = createInlineNode(type, tag.fullText, startIndex, lineNumber, startColumn);
+  return node;
+}
+
+/**
+ * parse text tag, which has child Str node.
+ * @param {string} type - type of tag
+ * @param {Tag} tag - tag to parse
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @param {number} startColumn - Start column in the line
+ * @return {TxtNode}
+ */
+function parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn) {
+  const node = createInlineNode(type, tag.fullText, startIndex, lineNumber, startColumn);
+  const strNode = createStrNode(tag.content.raw, tag.content.value,
+                                startIndex + tag.content.index, lineNumber,
+                                startColumn + tag.content.index);
+  node.children = [strNode];
+  return node;
+}
+
+/**
+ * parse @<href>{} tag.
+ * @param {Tag} tag - tag to parse
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @param {number} startColumn - Start column in the line
+ * @return {TxtNode}
+ */
+function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
+  const node = createInlineNode(Syntax.Href, tag.fullText, startIndex, lineNumber, startColumn);
+
+  const pieces = tag.content.raw.split(/,/, 2);
+  const url = pieces[0];
+  let label;
+  let labelOffset;
+  if (pieces.length == 2) {
+    label = pieces[1].replace(/^\s+/, '');
+    labelOffset = tag.content.index + tag.content.raw.indexOf(label, url.length);
+    assert(labelOffset >= tag.content.index);
+  } else {
+    label = url;
+    labelOffset = tag.content.index;
+  }
+
+  const strNode = createStrNode(label, label, startIndex + labelOffset,
+                                lineNumber, startColumn + labelOffset);
+
+  node.url = url;
+  node.children = [strNode];
+
+  return node;
+}
+
+/**
+ * parse @<ruby>{} tag.
+ * @param {Tag} tag - tag to parse
+ * @param {number} startIndex - Global start index of the line
+ * @param {number} lineNumber - Line number of the line
+ * @param {number} startColumn - Start column in the line
+ * @return {TxtNode}
+ */
+function parseRubyTag(tag, startIndex, lineNumber, startColumn) {
+  const node = createInlineNode(Syntax.Ruby, tag.fullText, startIndex, lineNumber, startColumn);
+  return node;
+}
+
 /**
  * parse inline tags and StrNodes from line.
  * @param {string} text - Text of the line
@@ -81,64 +217,88 @@ export function parseLine(line) {
 export function parseText(text, startIndex, lineNumber, startColumn=0) {
   assert(!text.match(/[\r\n]/));
 
-  const createInlineNonStrNode = function (type, text) {
-    return createInlineNode(type, text, startIndex, lineNumber, startColumn);
-  };
-
-  const createInlineStrNode = function (text, offset=0) {
-    return createInlineNode(Syntax.Str, text, startIndex + offset, lineNumber,
-                            startColumn + offset);
-  };
-
   const nodes = [];
-  let match;
-
-  // TODO: Support escape character \} in { }
-  while (match = text.match(/@<(\w+)>\{(.*?)\}/)) {
-    if (match.index > 0) {
-      const node = createInlineStrNode(text.substr(0, match.index));
+  let tag;
+  while (tag = findInlineTag(text)) {
+    if (tag.precedingText != '') {
+      const node = createStrNode(tag.precedingText, tag.precedingText,
+                                 startIndex, lineNumber, startColumn);
       nodes.push(node);
       startIndex += node.raw.length;
       startColumn += node.raw.length;
     }
 
-    const markup = { name: match[1], content: match[2] };
-    if (markup.name == 'code') {
-      const node = createInlineNonStrNode(Syntax.Code, match[0]);
-      nodes.push(node);
-    } else if (markup.name == 'href') {
-      const pieces = markup.content.split(/,/, 2);
-      const url = pieces[0];
-      const label = pieces.length == 2 ? pieces[1] : url;
-
-      const linkNode = createInlineNonStrNode(Syntax.Link, match[0]);
-      const labelOffset = match[0].indexOf(label);
-      assert(labelOffset >= 0);
-      const strNode = createInlineStrNode(label, labelOffset);
-      linkNode.children = [strNode];
-      nodes.push(linkNode);
-    } else if (markup.name == 'br') {
-      const emptyBreakNode = createInlineNonStrNode(Syntax.Break, match[0]);
-      nodes.push(emptyBreakNode);
-    } else if (['img', 'list', 'hd', 'table', 'fn'].indexOf(markup.name) >= 0) {
-      // do nothing
-    } else {
-      const offset = ('@<' + markup.name + '>{').length;
-      const node = createInlineStrNode(markup.content, offset);
+    const parser = InlineParsers[tag.name];
+    if (parser) {
+      const node = parser(tag, startIndex, lineNumber, startColumn);
       nodes.push(node);
     }
 
-    startIndex += match[0].length;
-    startColumn += match[0].length;
-    text = text.substr(match.index + match[0].length);
+    startIndex += tag.fullText.length;
+    startColumn += tag.fullText.length;
+    text = tag.followingText;
   }
 
   if (text.length) {
-    const node = createInlineStrNode(text);
+    const node = createStrNode(text, text, startIndex, lineNumber, startColumn);
     nodes.push(node);
   }
 
   return nodes;
+}
+
+/**
+ * find inline tag from text
+ * @param {string} text - Text to parse
+ * @return {Tag} the first Tag object if inline tag found, otherwise null
+ */
+export function findInlineTag(text) {
+  const match = text.match(/@<(\w+)>\{/);
+  if (!match) {
+    return null; // inline tag not found
+  }
+
+  // We need to ignore escaped closing brace \}.
+  // As look-behind expression is relatively new, use indexOf()
+  let contentStartIndex = match.index + match[0].length;
+  let fromIndex = contentStartIndex;
+  let closeIndex;
+  while (true) {
+    closeIndex = text.indexOf('}', fromIndex);
+    if (closeIndex < 0) {
+      break; // closing } not found. this is normal string not a inline tag
+    }
+
+    if (text[closeIndex - 1] != '\\') {
+      break; // found closing } which is not escaped
+    }
+
+    fromIndex = closeIndex + 1;
+  }
+
+  if (closeIndex < 0) {
+    return null; // not found
+  }
+
+  const contentCloseIndex = closeIndex - 1;
+  const rawContent = text.substr(contentStartIndex, contentCloseIndex - contentStartIndex + 1);
+  const tag = {
+    name: match[1],
+    content: {
+      raw: rawContent,
+      value: unescapeContent(rawContent),
+      index: contentStartIndex - match.index,
+    },
+    fullText: text.substr(match.index, closeIndex - match.index + 1),
+    precedingText: text.substr(0, match.index),
+    followingText: text.substr(closeIndex + 1),
+  };
+
+  return tag;
+
+  function unescapeContent(text) {
+    return text.replace(/\\\}/g, '}');
+  };
 }
 
 /**
@@ -195,21 +355,38 @@ export function createNodeFromLine(type, line) {
 }
 
 /**
- * create inline TxtNode.
- * @param {string} type - Type of node
- * @param {string} text - Raw text of node
+ * create Str TxtNode.
+ * @param {string} raw - Raw text of node
+ * @param {string} value - like raw but does not contain escape character
  * @param {number} startIndex - Start index in the document
  * @param {number} lineNumber - Line number of node
  * @param {number} [startColumn=0] - Start column in the line
  * @return {TxtNode} Created TxtNode
  */
-export function createInlineNode(type, text, startIndex, lineNumber, startColumn=0) {
-  assert(!text.match(/[\r\n]/));
+export function createStrNode(raw, value, startIndex, lineNumber, startColumn=0) {
+  assert(!value.match(/[\r\n]/));
+
+  const node = createInlineNode(Syntax.Str, raw, startIndex, lineNumber, startColumn);
+  node.value = value;
+  return node;
+}
+
+/**
+ * create inline TxtNode.
+ * @param {string} type - Type of node
+ * @param {string} raw - Raw text of node
+ * @param {number} startIndex - Start index in the document
+ * @param {number} lineNumber - Line number of node
+ * @param {number} [startColumn=0] - Start column in the line
+ * @return {TxtNode} Created TxtNode
+ */
+export function createInlineNode(type, raw, startIndex, lineNumber, startColumn=0) {
+  assert(!raw.match(/[\r\n]/));
 
   return {
     type: type,
-    raw: text,
-    range: [startIndex, startIndex + text.length],
+    raw: raw,
+    range: [startIndex, startIndex + raw.length],
     loc: {
       start: {
         line: lineNumber,
@@ -217,8 +394,9 @@ export function createInlineNode(type, text, startIndex, lineNumber, startColumn
       },
       end: {
         line: lineNumber,
-        column: startColumn + text.length,
+        column: startColumn + raw.length,
       },
     },
   };
 }
+
