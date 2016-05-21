@@ -1,3 +1,4 @@
+// LICENSE : MIT
 'use strict';
 import assert from 'assert';
 import { Syntax } from './mapping';

@@ -1,4 +1,4 @@
-# textlint-plugin-review [![Build Status](https://travis-ci.org/orangain/textlint-plugin-review.svg?branch=master)](https://travis-ci.org/orangain/textlint-plugin-review)
+# textlint-plugin-review [![Build Status](https://travis-ci.org/orangain/textlint-plugin-review.svg?branch=master)](https://travis-ci.org/orangain/textlint-plugin-review) [![npm version](https://badge.fury.io/js/textlint-plugin-review.svg)](https://badge.fury.io/js/textlint-plugin-review)
 
 Add [Re:VIEW](https://github.com/kmuto/review) support for [textlint](https://github.com/textlint/textlint "textlint").
 
@@ -11,7 +11,7 @@ What is textlint plugin? Please see https://github.com/textlint/textlint/blob/ma
 
 ## Usage
 
-Manually add text plugin to do following:
+Manually add review plugin to your `.textlintrc` like:
 
 ```
 {
@@ -21,7 +21,7 @@ Manually add text plugin to do following:
 }
 ```
 
-Lint Re:VIEW file with textlint
+Lint Re:VIEW file with textlint:
 
 ```
 $ textlint ch01.re
@@ -30,10 +30,6 @@ $ textlint ch01.re
 ## Tests
 
     npm test
-
-## Current Limitations
-
-* All the blocks except for table, e.g. `//list[]{ ... //}` or `//image[][]`, are ignored. So they do not appear in the resulting AST.
 
 ## Contributing
 
