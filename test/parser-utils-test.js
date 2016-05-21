@@ -1,8 +1,46 @@
 'use strict';
 import assert from 'power-assert';
-import { findInlineTag, parseText } from '../src/parser-utils';
+import { parseBlockArgs, findInlineTag, parseText } from '../src/parser-utils';
 
 describe('parser-utils', function () {
+  describe('#parseBlockArgs', function () {
+    it('should parse empty string as an empty array', function () {
+      const args = parseBlockArgs('', 0);
+      assert.deepEqual(args, []);
+    });
+
+    it('should parse one arguments', function () {
+      const args = parseBlockArgs('[foo]', 0);
+      assert.deepEqual(args, [
+        { startColumn: 1, value: 'foo' },
+      ]);
+    });
+
+    it('should parse two arguments', function () {
+      const args = parseBlockArgs('[foo][bar]', 0);
+      assert.deepEqual(args, [
+        { startColumn: 1, value: 'foo' },
+        { startColumn: 6, value: 'bar' },
+      ]);
+    });
+
+    it('should parse arguments with offset', function () {
+      const args = parseBlockArgs('[foo][bar]', 4);
+      assert.deepEqual(args, [
+        { startColumn: 5, value: 'foo' },
+        { startColumn: 10, value: 'bar' },
+      ]);
+    });
+
+    it('should parse arguments with escape character', function () {
+      const args = parseBlockArgs('[foo][bar\\]baz]', 0);
+      assert.deepEqual(args, [
+        { startColumn: 1, value: 'foo' },
+        { startColumn: 6, value: 'bar\\]baz' },
+      ]);
+    });
+  });
+
   describe('#findInlineTag', function () {
     it('should find inline tag', function () {
       const tag = findInlineTag(`AAA@<b>{BBB}CCC`);

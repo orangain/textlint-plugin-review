@@ -3,7 +3,8 @@ import assert from 'power-assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
 import {
-  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createStrNode, contextFromLine
+  parseBlockArgs, parseText, parseLine, createNodeFromChunk, createNodeFromLine,
+  createStrNode, contextFromLine
 } from './parser-utils';
 
 export const ChunkParsers = {
@@ -92,24 +93,4 @@ export function parseBlock(chunk) {
   }
 
   return parser(block);
-}
-
-/**
- * parse arguments of a block like "[foo][This is foo]".
- * @param {string} argsText - String to parse
- * @param {number} offset - Offset index where the args starts with in the line
- * @return {[Arg]} Array of Args
- */
-function parseBlockArgs(argsText, offset) {
-  const argRegex = /\[(.*?)\]/g;
-  const args = [];
-  let match;
-  while (match = argRegex.exec(argsText)) {
-    args.push({
-      value: match[1],
-      startColumn: offset + match.index + 1,
-    });
-  }
-
-  return args;
 }

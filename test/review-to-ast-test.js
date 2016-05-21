@@ -276,6 +276,20 @@ Name	Value
       assert(paragraph.children.length == 3);
     });
 
+    it('should parse footnote having escape characters', function () {
+      const result = parse(`//footnote[foo][The object should be @<code>{{x: a[1\\]\\}}.]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      assert(footnote.raw == '//footnote[foo][The object should be @<code>{{x: a[1\\]\\}}.]');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 3);
+      const code = paragraph.children[1];
+      assert(code.type == 'Code');
+      assert(code.raw == '@<code>{{x: a[1\\]\\}}');
+      assert(code.value == '{x: a[1]}');
+    });
+
     it('should parse lines starting with * as a List', function () {
       const result = parse(`
  * 第1の項目

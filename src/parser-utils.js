@@ -3,6 +3,31 @@ import assert from 'power-assert';
 import { Syntax } from './mapping';
 
 /**
+ * parse arguments of a block like "[foo][This is foo]".
+ * @param {string} argsText - String to parse
+ * @param {number} offset - Offset index where the args starts with in the line
+ * @return {[Arg]} Array of Args
+ */
+export function parseBlockArgs(argsText, offset) {
+  const argRegex = /\[(.*?)\]/g;
+  const args = [];
+
+  let openIndex = 0;
+  while (argsText[openIndex] == '[') {
+    let closeIndex = findCloseBracket(argsText, ']', openIndex);
+
+    args.push({
+      value: argsText.slice(openIndex + 1, closeIndex),
+      startColumn: offset + openIndex + 1,
+    });
+
+    openIndex = closeIndex + 1;
+  }
+
+  return args;
+}
+
+/**
  * parse single argument of a block as a TxtNode
  * @param {string} type - Type of node
  * @param {Arg} blockArg - Arg of a block to parse
@@ -16,8 +41,9 @@ export function parseBlockArg(type, blockArg, line) {
   }
 
   const startColumn = blockArg.startColumn;
-  const argNode = createInlineNode(type, argText, contextFromLine(line, startColumn));
-  argNode.children = parseText(argText, contextFromLine(line, startColumn));
+  const blockArgContext = contextNeedsUnescapeBrackets(contextFromLine(line, startColumn));
+  const argNode = createInlineNode(type, argText, blockArgContext);
+  argNode.children = parseText(argText, blockArgContext);
   return argNode;
 }
 
@@ -98,7 +124,7 @@ const InlineParsers = {
   column:  inlineNonTextTagParser(Syntax.Reference),
   fn:      inlineNonTextTagParser(Syntax.Reference),
 
-  code:    inlineNonTextTagParser(Syntax.Code),
+  code:    parseCodeTag,
   uchar:   inlineNonTextTagParser(Syntax.UnicodeChar),
   br:      inlineNonTextTagParser(Syntax.Break),
   icon:    inlineNonTextTagParser(Syntax.Icon),
@@ -147,9 +173,21 @@ function parseInlineNonTextTag(type, tag, context) {
  */
 function parseInlineTextTag(type, tag, context) {
   const node = createInlineNode(type, tag.fullText, context);
-  const strContext = contextNeedsUnescapeBraces(offsetContext(context, tag.content.index));
+  const strContext = offsetContext(context, tag.content.index);
   const strNode = createStrNode(tag.content.raw, strContext);
   node.children = [strNode];
+  return node;
+}
+
+/**
+ * parse code tag, which has no child.
+ * @param {Tag} tag - tag to parse
+ * @param {Context} context - context of the node
+ * @return {TxtNode}
+ */
+function parseCodeTag(tag, context) {
+  const node = createInlineNode(Syntax.Code, tag.fullText, context);
+  node.value = unescapeValue(tag.content.raw, context);
   return node;
 }
 
@@ -175,7 +213,7 @@ function parseHrefTag(tag, context) {
     labelOffset = tag.content.index;
   }
 
-  const strContext = contextNeedsUnescapeBraces(offsetContext(context, labelOffset));
+  const strContext = offsetContext(context, labelOffset);
   const strNode = createStrNode(label, strContext);
 
   node.url = url;
@@ -197,8 +235,7 @@ function parseRubyTag(tag, context) {
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 
-  const strContext = contextNeedsUnescapeBraces(context);
-  const strNode = createStrNode(rubyBase, strContext);
+  const strNode = createStrNode(rubyBase, context);
 
   node.rubyText = rubyText;
   node.children = [strNode];
@@ -226,7 +263,7 @@ export function parseText(text, context) {
 
     const parser = InlineParsers[tag.name];
     if (parser) {
-      const node = parser(tag, context);
+      const node = parser(tag, contextNeedsUnescapeBraces(context));
       nodes.push(node);
     }
 
@@ -256,21 +293,7 @@ export function findInlineTag(text) {
   // We need to ignore escaped closing brace \}.
   // As look-behind expression is relatively new, use indexOf()
   let contentStartIndex = match.index + match[0].length;
-  let fromIndex = contentStartIndex;
-  let closeIndex;
-  while (true) {
-    closeIndex = text.indexOf('}', fromIndex);
-    if (closeIndex < 0) {
-      break; // closing } not found. this is normal string not a inline tag
-    }
-
-    if (text[closeIndex - 1] != '\\') {
-      break; // found closing } which is not escaped
-    }
-
-    fromIndex = closeIndex + 1;
-  }
-
+  let closeIndex = findCloseBracket(text, '}', contentStartIndex);
   if (closeIndex < 0) {
     return null; // not found
   }
@@ -289,6 +312,24 @@ export function findInlineTag(text) {
   };
 
   return tag;
+}
+
+function findCloseBracket(text, character, fromIndex=0) {
+  let closeIndex;
+  while (true) {
+    closeIndex = text.indexOf(character, fromIndex);
+    if (closeIndex < 0) {
+      break; // closing } not found. this is normal string not a inline tag
+    }
+
+    if (text[closeIndex - 1] != '\\') {
+      break; // found closing } which is not escaped
+    }
+
+    fromIndex = closeIndex + 1;
+  }
+
+  return closeIndex;
 }
 
 /**
@@ -352,9 +393,17 @@ export function createNodeFromLine(type, line) {
  */
 export function createStrNode(raw, context) {
   const node = createInlineNode(Syntax.Str, raw, context);
+  node.value = unescapeValue(raw, context);
+  return node;
+}
 
-  let value = raw;
-
+/**
+ * unescape value considering context
+ * @param {string} value - Value to unescape
+ * @param {Context} context - context of unescape
+ * @return {string} Unescaped value
+ */
+export function unescapeValue(value, context) {
   if (context.unescapeBraces) {
     value = value.replace(/\\\}/g, '}');
   }
@@ -363,8 +412,7 @@ export function createStrNode(raw, context) {
     value = value.replace(/\\\]/g, ']');
   }
 
-  node.value = value;
-  return node;
+  return value;
 }
 
 /**
@@ -429,5 +477,16 @@ function offsetContext(originalContext, offset) {
 function contextNeedsUnescapeBraces(originalContext) {
   const newContext = Object.assign({}, originalContext);
   newContext.unescapeBraces = true;
+  return newContext;
+}
+
+/**
+ * create new context with unescapeBrackets = true.
+ * @param {Context} originalContext - Original Context object
+ * @return {Context} New Context object
+ */
+function contextNeedsUnescapeBrackets(originalContext) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.unescapeBrackets = true;
   return newContext;
 }
