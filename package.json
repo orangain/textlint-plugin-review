@@ -41,8 +41,9 @@
     "jscs": "^3.0.3",
     "mocha": "^2.3.3",
     "power-assert": "^1.1.0",
-    "textlint": "^4.2.1",
-    "textlint-rule-no-todo": "^1.0.3"
+    "textlint": "^6.8.0",
+    "textlint-rule-ignore-comments": "^1.1.0",
+    "textlint-rule-no-todo": "^2.0.0"
   },
   "dependencies": {
     "textlint-ast-test": "^1.1.2",
