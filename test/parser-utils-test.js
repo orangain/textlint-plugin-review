@@ -61,8 +61,14 @@ describe('parser-utils', function () {
   });
 
   describe('#parseText', function () {
+    const context = {
+      startIndex: 0,
+      lineNumber: 1,
+      startColumn: 0,
+    };
+
     it('should parse inline tag', function () {
-      const nodes = parseText(`@<b>{BBB}`, 0, 1);
+      const nodes = parseText(`@<b>{BBB}`, context);
       assert(nodes.length == 1);
       const strong = nodes[0];
       assert(strong.type == 'Strong');
@@ -73,7 +79,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse inline tag with following text', function () {
-      const nodes = parseText(`@<b>{BBB}CCC`, 0, 1);
+      const nodes = parseText(`@<b>{BBB}CCC`, context);
       assert(nodes.length == 2);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Strong', 'Str']);
@@ -88,7 +94,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse inline tag with preceding text', function () {
-      const nodes = parseText(`AAA@<b>{BBB}`, 0, 1);
+      const nodes = parseText(`AAA@<b>{BBB}`, context);
       assert(nodes.length == 2);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Strong']);
@@ -103,7 +109,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse inline tag with surrounding texts', function () {
-      const nodes = parseText(`AAA@<b>{BBB}CCC`, 0, 1);
+      const nodes = parseText(`AAA@<b>{BBB}CCC`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Strong', 'Str']);
@@ -117,7 +123,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse inline tags contains escape character', function () {
-      const nodes = parseText(`AAA@<b>{BB\\}B}CCC`, 0, 1);
+      const nodes = parseText(`AAA@<b>{BB\\}B}CCC`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Strong', 'Str']);
@@ -126,7 +132,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse href tag as a Link node', function () {
-      const nodes = parseText(`See: @<href>{http://www.google.com/}.`, 0, 1);
+      const nodes = parseText(`See: @<href>{http://www.google.com/}.`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Link', 'Str']);
@@ -140,7 +146,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse href tag as a Link node with label', function () {
-      const nodes = parseText(`See: @<href>{http://www.google.com/, google}.`, 0, 1);
+      const nodes = parseText(`See: @<href>{http://www.google.com/, google}.`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Link', 'Str']);
@@ -154,7 +160,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse ruby tag as a Ruby node', function () {
-      const nodes = parseText(`He is @<ruby>{Matsumoto, Matz}.`, 0, 1);
+      const nodes = parseText(`He is @<ruby>{Matsumoto, Matz}.`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Ruby', 'Str']);
@@ -166,7 +172,7 @@ describe('parser-utils', function () {
     });
 
     it('should parse fn tag as a Reference node', function () {
-      const nodes = parseText(`This is it@<fn>{example}.`, 0, 1);
+      const nodes = parseText(`This is it@<fn>{example}.`, context);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Str', 'Reference', 'Str']);

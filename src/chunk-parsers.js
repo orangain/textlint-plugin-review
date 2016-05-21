@@ -3,7 +3,7 @@ import assert from 'power-assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
 import {
-  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createStrNode
+  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createStrNode, contextFromLine
 } from './parser-utils';
 
 export const ChunkParsers = {
@@ -42,9 +42,7 @@ export function parseHeading(chunk) {
   const label = match[2].trim();
   const labelOffset = line.text.indexOf(label);
   assert(labelOffset >= 0);
-  const strNode = createStrNode(label, label, line.startIndex + labelOffset,
-                             line.lineNumber, labelOffset);
-
+  const strNode = createStrNode(label, label, contextFromLine(line, labelOffset));
   const heading = createNodeFromLine(Syntax.Heading, line);
   heading.depth = depth;
   heading.label = label;
@@ -66,8 +64,8 @@ export function parseList(prefixRegex, chunk) {
     itemNode.children = [];
     const itemText = line.text.replace(prefixRegex, '');
     const startColumn = line.text.length - itemText.length;
-    Array.prototype.push.apply(itemNode.children, parseText(
-      itemText, line.startIndex + startColumn, line.lineNumber, startColumn));
+    Array.prototype.push.apply(itemNode.children,
+                               parseText(itemText, contextFromLine(line, startColumn)));
 
     node.children.push(itemNode);
   });

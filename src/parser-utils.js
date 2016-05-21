@@ -16,10 +16,8 @@ export function parseBlockArg(type, blockArg, line) {
   }
 
   const startColumn = blockArg.startColumn;
-  const argNode = createInlineNode(type, argText, line.startIndex + startColumn,
-                                   line.lineNumber, startColumn);
-  argNode.children = parseText(argText, line.startIndex + startColumn,
-                               line.lineNumber, startColumn);
+  const argNode = createInlineNode(type, argText, contextFromLine(line, startColumn));
+  argNode.children = parseText(argText, contextFromLine(line, startColumn));
   return argNode;
 }
 
@@ -67,7 +65,7 @@ export function parseBlockWithContent(block, type) {
  * @return {[TxtNode]} TxtNodes
  */
 export function parseLine(line) {
-  return parseText(line.text, line.startIndex, line.lineNumber);
+  return parseText(line.text, contextFromLine(line));
 }
 
 const InlineParsers = {
@@ -114,8 +112,8 @@ const InlineParsers = {
  * @return {function} parser function
  */
 function inlineNonTextTagParser(type) {
-  return (tag, startIndex, lineNumber, startColumn) =>
-    parseInlineNonTextTag(type, tag, startIndex, lineNumber, startColumn);
+  return (tag, context) =>
+    parseInlineNonTextTag(type, tag, context);
 }
 
 /**
@@ -124,21 +122,19 @@ function inlineNonTextTagParser(type) {
  * @return {function} parser function
  */
 function inlineTextTagParser(type) {
-  return (tag, startIndex, lineNumber, startColumn) =>
-    parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn);
+  return (tag, context) =>
+    parseInlineTextTag(type, tag, context);
 }
 
 /**
  * parse non-text tag, which has no child.
  * @param {string} type - type of tag
  * @param {Tag} tag - tag to parse
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} startColumn - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode}
  */
-function parseInlineNonTextTag(type, tag, startIndex, lineNumber, startColumn) {
-  const node = createInlineNode(type, tag.fullText, startIndex, lineNumber, startColumn);
+function parseInlineNonTextTag(type, tag, context) {
+  const node = createInlineNode(type, tag.fullText, context);
   return node;
 }
 
@@ -146,16 +142,13 @@ function parseInlineNonTextTag(type, tag, startIndex, lineNumber, startColumn) {
  * parse text tag, which has child Str node.
  * @param {string} type - type of tag
  * @param {Tag} tag - tag to parse
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} startColumn - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode}
  */
-function parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn) {
-  const node = createInlineNode(type, tag.fullText, startIndex, lineNumber, startColumn);
+function parseInlineTextTag(type, tag, context) {
+  const node = createInlineNode(type, tag.fullText, context);
   const strNode = createStrNode(tag.content.raw, tag.content.value,
-                                startIndex + tag.content.index, lineNumber,
-                                startColumn + tag.content.index);
+                                offsetContext(context, tag.content.index));
   node.children = [strNode];
   return node;
 }
@@ -163,13 +156,11 @@ function parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn) {
 /**
  * parse @<href>{} tag.
  * @param {Tag} tag - tag to parse
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} startColumn - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode}
  */
-function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
-  const node = createInlineNode(Syntax.Href, tag.fullText, startIndex, lineNumber, startColumn);
+function parseHrefTag(tag, context) {
+  const node = createInlineNode(Syntax.Href, tag.fullText, context);
 
   const pieces = tag.content.raw.split(/\s*,\s*/, 2);
   const url = pieces[0];
@@ -184,8 +175,7 @@ function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
     labelOffset = tag.content.index;
   }
 
-  const strNode = createStrNode(label, label, startIndex + labelOffset,
-                                lineNumber, startColumn + labelOffset);
+  const strNode = createStrNode(label, label, offsetContext(context, labelOffset));
 
   node.url = url;
   node.children = [strNode];
@@ -196,19 +186,17 @@ function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
 /**
  * parse @<ruby>{} tag.
  * @param {Tag} tag - tag to parse
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} startColumn - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode}
  */
-function parseRubyTag(tag, startIndex, lineNumber, startColumn) {
-  const node = createInlineNode(Syntax.Ruby, tag.fullText, startIndex, lineNumber, startColumn);
+function parseRubyTag(tag, context) {
+  const node = createInlineNode(Syntax.Ruby, tag.fullText, context);
   const pieces = tag.content.raw.split(/\s*,\s*/, 2);
   assert(pieces.length == 2);
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 
-  const strNode = createStrNode(rubyBase, rubyBase, startIndex, lineNumber, startColumn);
+  const strNode = createStrNode(rubyBase, rubyBase, context);
 
   node.rubyText = rubyText;
   node.children = [strNode];
@@ -219,12 +207,10 @@ function parseRubyTag(tag, startIndex, lineNumber, startColumn) {
 /**
  * parse inline tags and StrNodes from line.
  * @param {string} text - Text of the line
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} [startColumn=0] - Start column in the line
+ * @param {Context} context - context of the node
  * @return {[TxtNode]} TxtNodes in the line
  */
-export function parseText(text, startIndex, lineNumber, startColumn=0) {
+export function parseText(text, context) {
   assert(!text.match(/[\r\n]/));
 
   const nodes = [];
@@ -232,25 +218,23 @@ export function parseText(text, startIndex, lineNumber, startColumn=0) {
   while (tag = findInlineTag(text)) {
     if (tag.precedingText != '') {
       const node = createStrNode(tag.precedingText, tag.precedingText,
-                                 startIndex, lineNumber, startColumn);
+                                 context);
       nodes.push(node);
-      startIndex += node.raw.length;
-      startColumn += node.raw.length;
+      context = offsetContext(context, node.raw.length);
     }
 
     const parser = InlineParsers[tag.name];
     if (parser) {
-      const node = parser(tag, startIndex, lineNumber, startColumn);
+      const node = parser(tag, context);
       nodes.push(node);
     }
 
-    startIndex += tag.fullText.length;
-    startColumn += tag.fullText.length;
+    context = offsetContext(context, tag.fullText.length);
     text = tag.followingText;
   }
 
   if (text.length) {
-    const node = createStrNode(text, text, startIndex, lineNumber, startColumn);
+    const node = createStrNode(text, text, context);
     nodes.push(node);
   }
 
@@ -361,22 +345,20 @@ export function createNodeFromLinesInChunk(type, lines, chunk) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromLine(type, line) {
-  return createInlineNode(type, line.text, line.startIndex, line.lineNumber);
+  return createInlineNode(type, line.text, contextFromLine(line));
 }
 
 /**
  * create Str TxtNode.
  * @param {string} raw - Raw text of node
  * @param {string} value - like raw but does not contain escape character
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {number} [startColumn=0] - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode} Created TxtNode
  */
-export function createStrNode(raw, value, startIndex, lineNumber, startColumn=0) {
+export function createStrNode(raw, value, context) {
   assert(!value.match(/[\r\n]/));
 
-  const node = createInlineNode(Syntax.Str, raw, startIndex, lineNumber, startColumn);
+  const node = createInlineNode(Syntax.Str, raw, context);
   node.value = value;
   return node;
 }
@@ -385,28 +367,40 @@ export function createStrNode(raw, value, startIndex, lineNumber, startColumn=0)
  * create inline TxtNode.
  * @param {string} type - Type of node
  * @param {string} raw - Raw text of node
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {number} [startColumn=0] - Start column in the line
+ * @param {Context} context - context of the node
  * @return {TxtNode} Created TxtNode
  */
-export function createInlineNode(type, raw, startIndex, lineNumber, startColumn=0) {
+export function createInlineNode(type, raw, context) {
   assert(!raw.match(/[\r\n]/));
 
   return {
     type: type,
     raw: raw,
-    range: [startIndex, startIndex + raw.length],
+    range: [context.startIndex, context.startIndex + raw.length],
     loc: {
       start: {
-        line: lineNumber,
-        column: startColumn,
+        line: context.lineNumber,
+        column: context.startColumn,
       },
       end: {
-        line: lineNumber,
-        column: startColumn + raw.length,
+        line: context.lineNumber,
+        column: context.startColumn + raw.length,
       },
     },
   };
 }
 
+export function contextFromLine(line, offset=0) {
+  return {
+    startIndex: line.startIndex + offset,
+    lineNumber: line.lineNumber,
+    startColumn: offset,
+  };
+}
+
+function offsetContext(originalContext, offset) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.startIndex += offset;
+  newContext.startColumn += offset;
+  return newContext;
+}

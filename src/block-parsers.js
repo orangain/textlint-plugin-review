@@ -1,7 +1,8 @@
 'use strict';
 import { Syntax } from './mapping';
 import {
-  parseText, parseBlockArg, parseBlockWithContent, createNodeFromChunk, createInlineNode
+  parseText, parseBlockArg, parseBlockWithContent, createNodeFromChunk, createInlineNode,
+  contextFromLine
 } from './parser-utils';
 
 export const BlockParsers = {
@@ -101,10 +102,9 @@ function parseTableContent(line) {
       continue;
     }
 
-    const cellNode = createInlineNode(Syntax.TableCell, cellContent, line.startIndex + startColumn,
-                                      line.lineNumber, startColumn);
-    cellNode.children = parseText(cellContent, line.startIndex + startColumn,
-                                  line.lineNumber, startColumn);
+    const context = contextFromLine(line, startColumn);
+    const cellNode = createInlineNode(Syntax.TableCell, cellContent, context);
+    cellNode.children = parseText(cellContent, context);
     nodes.push(cellNode);
   }
 
