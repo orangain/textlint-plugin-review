@@ -61,7 +61,48 @@ describe('parser-utils', function () {
   });
 
   describe('#parseText', function () {
-    it('should parse inline tags', function () {
+    it('should parse inline tag', function () {
+      const nodes = parseText(`@<b>{BBB}`, 0, 1);
+      assert(nodes.length == 1);
+      const strong = nodes[0];
+      assert(strong.type == 'Strong');
+      assert(strong.children.length == 1);
+      assert(strong.children[0].type == 'Str');
+      assert(strong.children[0].loc.start.line == 1);
+      assert(strong.children[0].loc.start.column == 5);
+    });
+
+    it('should parse inline tag with following text', function () {
+      const nodes = parseText(`@<b>{BBB}CCC`, 0, 1);
+      assert(nodes.length == 2);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Strong', 'Str']);
+      assert.deepEqual(nodes.map(node => node.raw),
+                       ['@<b>{BBB}', 'CCC']);
+      const strong = nodes[0];
+      assert(strong.type == 'Strong');
+      assert(strong.children.length == 1);
+      assert(strong.children[0].type == 'Str');
+      assert(strong.children[0].loc.start.line == 1);
+      assert(strong.children[0].loc.start.column == 5);
+    });
+
+    it('should parse inline tag with preceding text', function () {
+      const nodes = parseText(`AAA@<b>{BBB}`, 0, 1);
+      assert(nodes.length == 2);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Str', 'Strong']);
+      assert.deepEqual(nodes.map(node => node.raw),
+                       ['AAA', '@<b>{BBB}']);
+      const strong = nodes[1];
+      assert(strong.type == 'Strong');
+      assert(strong.children.length == 1);
+      assert(strong.children[0].type == 'Str');
+      assert(strong.children[0].loc.start.line == 1);
+      assert(strong.children[0].loc.start.column == 8);
+    });
+
+    it('should parse inline tag with surrounding texts', function () {
       const nodes = parseText(`AAA@<b>{BBB}CCC`, 0, 1);
       assert(nodes.length == 3);
       assert.deepEqual(nodes.map(node => node.type),
@@ -122,6 +163,13 @@ describe('parser-utils', function () {
       assert(ruby.children.length == 1);
       assert(ruby.children[0].type == 'Str');
       assert(ruby.children[0].raw == 'Matsumoto');
+    });
+
+    it('should parse fn tag as a Reference node', function () {
+      const nodes = parseText(`This is it@<fn>{example}.`, 0, 1);
+      assert(nodes.length == 3);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Str', 'Reference', 'Str']);
     });
   });
 });
