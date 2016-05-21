@@ -3,8 +3,8 @@
 import { Syntax } from './mapping';
 import { parseText, parseLine } from './inline-parsers';
 import {
-  createNodeFromChunk, createNodeFromLinesInChunk, createInlineNode, contextFromLine,
-  contextNeedsUnescapeBrackets
+  createNodeFromChunk, createNodeFromLinesInChunk, createCommentNodeFromLine, createInlineNode,
+  contextFromLine, contextNeedsUnescapeBrackets
 } from './parser-utils';
 
 export const BlockParsers = {
@@ -85,6 +85,10 @@ function parseTable(block) {
  * @return {[TxtNode]} ListItem nodes in the line
  */
 function parseTableContent(line) {
+  if (line.isComment) {
+    return [createCommentNodeFromLine(line)];
+  }
+
   if (line.text.match(/^-+$/)) {
     return [];  // Ignore horizontal line
   }
@@ -143,7 +147,13 @@ function parseQuote(block) {
  * @return {TxtNode} CodeBlock node
  */
 function parseCodeBlock(block) {
-  return createNodeFromChunk(block.chunk, Syntax.CodeBlock);
+  const node = createNodeFromChunk(block.chunk, Syntax.CodeBlock);
+  node.value = block.chunk.lines
+    .slice(1, block.chunk.lines.length - 1)
+    .filter(line => !line.isComment)
+    .map(line => line.raw)
+    .join('');
+  return node;
 }
 
 /**

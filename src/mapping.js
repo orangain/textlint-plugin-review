@@ -17,6 +17,7 @@ export const Syntax = {
   CodeBlock: 'CodeBlock', // Though word 'list' is used in ReVIEW's context, it's confusing
   Image: 'Image',
   Quote: 'BlockQuote',
+  Comment: 'Comment',
 
   // textlint standard inline tags
   Str: 'Str',

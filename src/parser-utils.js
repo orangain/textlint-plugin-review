@@ -131,7 +131,20 @@ export function createNodeFromLinesInChunk(type, lines, chunk) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromLine(type, line) {
+  assert(!line.isComment);
   return createInlineNode(type, line.text, contextFromLine(line));
+}
+
+/**
+ * create comment TxtNode from single line.
+ * @param {Line} line - A line
+ * @return {TxtNode} Created TxtNode
+ */
+export function createCommentNodeFromLine(line) {
+  assert(line.isComment);
+  const node = createInlineNode(Syntax.Comment, line.text, contextFromLine(line));
+  node.value = line.text;
+  return node;
 }
 
 /**

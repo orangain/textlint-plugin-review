@@ -8,6 +8,9 @@ export const ChunkTypes = {
   OrderedList: 'OrderedList',
   DefinitionList: 'DefinitionList',
   Block: 'Block',
+
+  // NOTE: Comment chunk means an independent comment line. Other chunks may include comment lines.
+  Comment: 'Comment',
 };
 
 /**
@@ -42,9 +45,17 @@ export function parseAsChunks(text) {
   return chunks;
 
   function parseLine(result, line) {
-    // ignore comment
-    // Note that comment does not break current chunk, i.e. a block can contain comments in its body.
+    // comment
+    // NOTE: comment does not break current chunk, i.e. a block can contain comments in its body.
     if (line.text.startsWith('#@')) {
+      line.isComment = true;
+      if (currentChunk) {
+        currentChunk.lines.push(line);
+      } else {
+        // A comment line corresponds to a Comment chunk.
+        result.push(createChunk(ChunkTypes.Comment, line));
+      }
+
       return;
     }
 

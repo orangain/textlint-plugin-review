@@ -90,11 +90,14 @@ continuation line`);
       assert(result.children.length == 1);
       const paragraph = result.children[0];
       assert.deepEqual(paragraph.children.map(node => node.type),
-                       ['Str', 'Str', 'Str']);
+                       ['Str', 'Str', 'Comment', 'Str']);
       assert.deepEqual(paragraph.children.map(node => node.raw),
-                       ['test', 'paragraph', 'continuation line']);
+                       ['test', 'paragraph', '#@# This is a comment', 'continuation line']);
       assert.deepEqual(paragraph.children.map(node => node.loc.start.line),
-                       [1, 2, 4]);
+                       [1, 2, 3, 4]);
+      const comment = paragraph.children[2];
+      assert(comment.value == '#@# This is a comment');
+      assert(!comment.children);
     });
 
     it('should parse equal signs as headings', function () {
@@ -144,21 +147,21 @@ paragraph
 #@# !!!
 
 another paragraph`);
-      assert(result.children.length == 2);
-      assert(!result.children[0].raw.includes('???'));
+      assert(result.children.length == 3);
+      assert(result.children[0].raw.includes('???'));
       assert.deepEqual(result.children.map(node => node.type),
-                       ['Paragraph', 'Paragraph']);
+                       ['Comment', 'Paragraph', 'Paragraph']);
     });
 
-    it('should ignore #@warn', function () {
+    it('should not ignore #@warn', function () {
       const result = parse(`test
 paragraph
 
 #@warn(TODO: should be fixed)
 another paragraph`);
-      assert(!result.children[1].raw.includes('TODO'));
+      assert(result.children[1].raw.includes('TODO'));
       assert.deepEqual(result.children.map(node => node.type),
-                       ['Paragraph', 'Paragraph']);
+                       ['Paragraph', 'Comment', 'Paragraph']);
     });
 
     it('should parse block', function () {
@@ -177,6 +180,30 @@ second line`);
       assert(list.raw == `//list[foo][Assign 0 to x]{
 let x = 0;
 //}`);
+      assert(list.value == 'let x = 0;\n');
+      assert(list.children.length == 1);
+      const caption = list.children[0];
+      assert(caption.type == 'Caption');
+    });
+
+    it('should parse block including comments', function () {
+      const result = parse(`
+//list[foo][Assign 0 to x]{
+let x = 0;
+#@# This is a comment
+const y = 1;
+//}`);
+      assert(result.children.length == 1);
+      const list = result.children[0];
+      assert(list.type == 'CodeBlock');
+      assert(list.raw == `//list[foo][Assign 0 to x]{
+let x = 0;
+#@# This is a comment
+const y = 1;
+//}`);
+      assert(list.value == `let x = 0;
+const y = 1;
+`);
       assert(list.children.length == 1);
       const caption = list.children[0];
       assert(caption.type == 'Caption');
@@ -247,13 +274,18 @@ Name	Value
                        ['.gitignore']);
     });
 
-    it('should ignore comments in a table', function () {
+    it('should not ignore comments in a table', function () {
       const result = parse(`
 //table[][]{
+Name
+-------
 #@# comment in a table
+Foo
 //}`);
       const table = result.children[0];
-      assert(table.children.length == 0);
+      assert(table.children.length == 3);
+      assert.deepEqual(table.children.map(node => node.type),
+                       ['ListItem', 'Comment', 'ListItem']);
     });
 
     it('should parse footnote', function () {
@@ -324,6 +356,21 @@ Name	Value
       const str = item.children[0];
       assert(str.type == 'Str');
       assert(str.raw == '第1の項目');
+    });
+
+    it('should parse comments in a list properly', function () {
+      const result = parse(`
+ * 1st item
+ * 2nd item
+#@# Comment in a list
+ * 3rd item
+`);
+      assert(result.children.length == 1);
+      const list = result.children[0];
+      assert(list.type == 'List');
+      assert(list.children.length == 4);
+      assert.deepEqual(list.children.map(node => node.type),
+                       ['ListItem', 'ListItem', 'Comment', 'ListItem']);
     });
 
     it('should parse lines starting with a number as a List', function () {
@@ -428,6 +475,25 @@ and I show the way how to write a program in Linux.
       assert(lead.children[0].raw == `In the chapter, I introduce brief summary of the book,
 and I show the way how to write a program in Linux.`);
       assert(lead.children[0].children.length == 2);
+    });
+
+    it('should parse lead block having comments', function () {
+      const result = parse(`
+//lead{
+In the chapter, I introduce brief summary of the book,
+#@# This is a comment.
+and I show the way how to write a program in Linux.
+//}
+`);
+      assert(result.children.length == 1);
+      const lead = result.children[0];
+      assert(lead.type == 'Block');
+      assert(lead.children.length == 1);
+      const paragraph = lead.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 3);
+      assert.deepEqual(paragraph.children.map(node => node.type),
+                       ['Str', 'Comment', 'Str']);
     });
 
     it('should parse quote block', function () {

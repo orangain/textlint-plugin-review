@@ -80,28 +80,28 @@ This is paragraph
                        ['={ch01} Test\n', 'This is paragraph\n', '== Headings']);
     });
 
-    it('should ignore #@#', function () {
+    it('should not ignore #@#', function () {
       const chunks = parseAsChunks(`#@# ???
 test
 paragraph
 #@# !!!
 
 another paragraph`);
-      assert(chunks.length == 2);
-      assert(!chunks[0].raw.includes('???'));
+      assert(chunks.length == 3);
+      assert(chunks[0].raw.includes('???'));
       assert.deepEqual(chunks.map(chunk => chunk.type),
-                       ['Paragraph', 'Paragraph']);
+                       ['Comment', 'Paragraph', 'Paragraph']);
     });
 
-    it('should ignore #@warn', function () {
+    it('should not ignore #@warn', function () {
       const chunks = parseAsChunks(`test
 paragraph
 
 #@warn(TODO: should be fixed)
 another paragraph`);
-      assert(!chunks[1].raw.includes('TODO'));
+      assert(chunks[1].raw.includes('TODO'));
       assert.deepEqual(chunks.map(chunk => chunk.type),
-                       ['Paragraph', 'Paragraph']);
+                       ['Paragraph', 'Comment', 'Paragraph']);
     });
 
     it('should not split a block with a comment', function () {
@@ -114,10 +114,12 @@ x += 1
       assert(chunks.length == 1);
       const list = chunks[0];
       assert(list.type == 'Block');
-      assert(list.lines.length == 4); // including open and close tags
+      assert(list.lines.length == 5); // including open and close tags
+      assert(list.lines[2].isComment);
       assert.deepEqual(list.lines.map(line => line.text), [
         '//list[][]{',
         'x = 2',
+        '#@# comment in a list',
         'x += 1',
         '//}',
       ]);
@@ -192,6 +194,45 @@ second line`);
       assert(chunks.length == 1);
       const list = chunks[0];
       assert(list.type == 'DefinitionList');
+    });
+
+    it('should parse comments as a Comment chunk', function () {
+      const chunks = parseAsChunks(`
+#@# This is a comment.
+#@# Independent comment lines form a Comment chunk.
+`);
+      assert(chunks.length == 2);
+      assert.deepEqual(chunks.map(chunk => chunk.type),
+                       ['Comment', 'Comment']);
+      assert.deepEqual(chunks.map(chunk => chunk.lines.length), [1, 1]);
+    });
+
+    it('should parse paragraph immediately after comments as a Paragraph chunk', function () {
+      const chunks = parseAsChunks(`
+#@# This is a comment.
+#@# Independent comment lines form a Comment chunk.
+This is a paragraph immediately after a comment.
+`);
+      assert(chunks.length == 3);
+      assert.deepEqual(chunks.map(chunk => chunk.type),
+                       ['Comment', 'Comment', 'Paragraph']);
+      assert.deepEqual(chunks.map(chunk => chunk.lines.length),
+                       [1, 1, 1]);
+    });
+
+    it('should parse comments in a paragraph as a part of a Paragraph chunks', function () {
+      const chunks = parseAsChunks(`
+This is a paragraph immediately before a comment.
+#@# This is a comment.
+#@# Comment lines in a paragraph does not form a Comment chunk.
+This is a paragraph immediately after a comment.
+`);
+      assert(chunks.length == 1);
+      const paragraph = chunks[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.lines.length == 4);
+      assert.deepEqual(paragraph.lines.map(line => line.isComment),
+                       [undefined, true, true, undefined]);
     });
   });
 });

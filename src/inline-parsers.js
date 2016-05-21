@@ -3,8 +3,8 @@
 import assert from 'power-assert';
 import { Syntax } from './mapping';
 import {
-  parseBlockArg, findInlineTag, createNodeFromChunk, createStrNode, createInlineNode,
-  contextFromLine, offsetContext, contextNeedsUnescapeBraces, unescapeValue
+  parseBlockArg, findInlineTag, createNodeFromChunk, createCommentNodeFromLine, createStrNode,
+  createInlineNode, contextFromLine, offsetContext, contextNeedsUnescapeBraces, unescapeValue
 } from './parser-utils';
 
 /**
@@ -13,6 +13,10 @@ import {
  * @return {[TxtNode]} TxtNodes
  */
 export function parseLine(line) {
+  if (line.isComment) {
+    return [createCommentNodeFromLine(line)];
+  }
+
   return parseText(line.text, contextFromLine(line));
 }
 

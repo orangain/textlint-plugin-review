@@ -5,7 +5,8 @@ import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
 import { parseText, parseLine } from './inline-parsers';
 import {
-  parseBlockArgs, createNodeFromChunk, createNodeFromLine, createStrNode, contextFromLine
+  parseBlockArgs, createNodeFromChunk, createNodeFromLine, createCommentNodeFromLine,
+  createStrNode, contextFromLine
 } from './parser-utils';
 
 export const ChunkParsers = {
@@ -15,6 +16,7 @@ export const ChunkParsers = {
   OrderedList: chunk => parseList(/^\s+\d+\.\s+/, chunk),
   DefinitionList: chunk => parseList(/^(\s+:\s+|\s+)/, chunk),
   Block: parseBlock,
+  Comment: parseComment,
 };
 
 /**
@@ -62,6 +64,11 @@ export function parseList(prefixRegex, chunk) {
   const node = createNodeFromChunk(chunk);
   node.children = [];
   chunk.lines.forEach(line => {
+    if (line.isComment) {
+      node.children.push(createCommentNodeFromLine(line));
+      return;
+    }
+
     const itemNode = createNodeFromLine(Syntax.ListItem, line);
     itemNode.children = [];
     const itemText = line.text.replace(prefixRegex, '');
@@ -94,4 +101,17 @@ export function parseBlock(chunk) {
   }
 
   return parser(block);
+}
+
+/**
+ * parse comment chunk.
+ * @param {Chunk} chunk - Chunk to parse
+ * @return {TxtNode}  node
+ */
+export function parseComment(chunk) {
+  assert(chunk.lines.length == 1);
+  assert(chunk.lines[0].isComment);
+  const node = createNodeFromChunk(chunk);
+
+  return node;
 }
