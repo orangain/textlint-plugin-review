@@ -1,8 +1,9 @@
 'use strict';
 import { Syntax } from './mapping';
+import { parseText, parseLine } from './inline-parsers';
 import {
-  parseText, parseBlockArg, parseBlockWithContent, createNodeFromChunk, createInlineNode,
-  contextFromLine
+  createNodeFromChunk, createNodeFromLinesInChunk, createInlineNode, contextFromLine,
+  contextNeedsUnescapeBrackets
 } from './parser-utils';
 
 export const BlockParsers = {
@@ -170,3 +171,62 @@ function parseLead(block) {
 function parseShortColumn(block) {
   return parseBlockWithContent(block, Syntax.ShortColumn);
 }
+
+/**
+ * parse a block with content. which is parsed as paragraphs.
+ * @param {Block} block - line to parse
+ * @param {string} type - Type of node
+ * @return {[TxtNode]} TxtNode
+ */
+export function parseBlockWithContent(block, type) {
+  const chunk = block.chunk;
+  const node = createNodeFromChunk(chunk, type);
+  node.children = [];
+
+  let lines = [];
+  const flushParagraph = function () {
+    if (lines.length > 0) {
+      const paragraph = createNodeFromLinesInChunk(Syntax.Paragraph, lines, chunk);
+      paragraph.children = [];
+      lines.forEach(line => {
+        Array.prototype.push.apply(paragraph.children, parseLine(line));
+      });
+      node.children.push(paragraph);
+    }
+
+    lines = [];
+  };
+
+  chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
+    if (line.text == '') {
+      flushParagraph();
+    } else {
+      lines.push(line);
+    }
+  });
+
+  flushParagraph();
+
+  return node;
+}
+
+/**
+ * parse single argument of a block as a TxtNode
+ * @param {string} type - Type of node
+ * @param {Arg} blockArg - Arg of a block to parse
+ * @param {Line} line - line where Arg exists
+ * @return {TxtNode}
+ */
+export function parseBlockArg(type, blockArg, line) {
+  const argText = blockArg.value;
+  if (!argText) {
+    return null;
+  }
+
+  const startColumn = blockArg.startColumn;
+  const blockArgContext = contextNeedsUnescapeBrackets(contextFromLine(line, startColumn));
+  const argNode = createInlineNode(type, argText, blockArgContext);
+  argNode.children = parseText(argText, blockArgContext);
+  return argNode;
+}
+

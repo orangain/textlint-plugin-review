@@ -2,9 +2,9 @@
 import assert from 'power-assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
+import { parseText, parseLine } from './inline-parsers';
 import {
-  parseBlockArgs, parseText, parseLine, createNodeFromChunk, createNodeFromLine,
-  createStrNode, contextFromLine
+  parseBlockArgs, createNodeFromChunk, createNodeFromLine, createStrNode, contextFromLine
 } from './parser-utils';
 
 export const ChunkParsers = {
