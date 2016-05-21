@@ -277,6 +277,19 @@ Name	Value
     });
 
     it('should parse footnote having escape characters', function () {
+      const result = parse(`//footnote[foo][See: [1\\]]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 1);
+      const code = paragraph.children[0];
+      assert(code.type == 'Str');
+      assert(code.raw == 'See: [1\\]');
+      assert(code.value == 'See: [1]');
+    });
+
+    it('should parse footnote having more escape characters', function () {
       const result = parse(`//footnote[foo][The object should be @<code>{{x: a[1\\]\\}}.]`);
       const footnote = result.children[0];
       assert(footnote.type == 'Footnote');
