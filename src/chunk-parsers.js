@@ -110,8 +110,7 @@ export function parseBlock(chunk) {
  */
 export function parseComment(chunk) {
   assert(chunk.lines.length == 1);
-  assert(chunk.lines[0].isComment);
-  const node = createNodeFromChunk(chunk);
+  const node = createCommentNodeFromLine(chunk.lines[0]);
 
   return node;
 }

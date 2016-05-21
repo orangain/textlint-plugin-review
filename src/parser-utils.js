@@ -143,7 +143,15 @@ export function createNodeFromLine(type, line) {
 export function createCommentNodeFromLine(line) {
   assert(line.isComment);
   const node = createInlineNode(Syntax.Comment, line.text, contextFromLine(line));
-  node.value = line.text;
+  let match;
+  if (match = line.text.match(/^#@#\s*(.*)/)) {
+    node.value = match[1];
+  } else if (match = line.text.match(/^#@warn\((.*)\)/)) {
+    node.value = match[1];
+  } else {
+    node.value = line.text;
+  }
+
   return node;
 }
 

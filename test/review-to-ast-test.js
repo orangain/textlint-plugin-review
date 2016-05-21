@@ -96,7 +96,7 @@ continuation line`);
       assert.deepEqual(paragraph.children.map(node => node.loc.start.line),
                        [1, 2, 3, 4]);
       const comment = paragraph.children[2];
-      assert(comment.value == '#@# This is a comment');
+      assert(comment.value == 'This is a comment');
       assert(!comment.children);
     });
 
@@ -159,9 +159,11 @@ paragraph
 
 #@warn(TODO: should be fixed)
 another paragraph`);
-      assert(result.children[1].raw.includes('TODO'));
       assert.deepEqual(result.children.map(node => node.type),
                        ['Paragraph', 'Comment', 'Paragraph']);
+      const comment = result.children[1];
+      assert(comment.raw.includes('TODO'));
+      assert(comment.value == 'TODO: should be fixed');
     });
 
     it('should parse block', function () {
