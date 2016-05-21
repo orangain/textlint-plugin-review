@@ -39,7 +39,7 @@ export function parseParagraph(chunk) {
  * @return {TxtNode} Heading node
  */
 export function parseHeading(chunk) {
-  assert(chunk.lines.length == 1);
+  assert(chunk.lines.length === 1);
   const line = chunk.lines[0];
   const match = line.text.match(/(=+)\S*\s*(.*)/);  // \S* skip [column] and {ch01}
   const depth = match[1].length;
@@ -109,7 +109,7 @@ export function parseBlock(chunk) {
  * @return {TxtNode}  node
  */
 export function parseComment(chunk) {
-  assert(chunk.lines.length == 1);
+  assert(chunk.lines.length === 1);
   const node = createCommentNodeFromLine(chunk.lines[0]);
 
   return node;

@@ -53,12 +53,12 @@ function validateAST(ast, text, lines) {
   traverse(ast, {
     enter(node) {
       try {
-        assert(node.raw == text.slice(node.range[0], node.range[1]));
+        assert(node.raw === text.slice(node.range[0], node.range[1]));
 
-        if (node.loc.start.line == node.loc.end.line) {
+        if (node.loc.start.line === node.loc.end.line) {
           // single line
           const line = lines[node.loc.start.line - 1];
-          assert(node.raw == line.slice(node.loc.start.column, node.loc.end.column));
+          assert(node.raw === line.slice(node.loc.start.column, node.loc.end.column));
         } else {
           // multi line
           const firstLine = lines[node.loc.start.line - 1];

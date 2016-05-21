@@ -132,7 +132,7 @@ function parseHrefTag(tag, context) {
   const url = pieces[0];
   let label;
   let labelOffset;
-  if (pieces.length == 2) {
+  if (pieces.length === 2) {
     label = pieces[1];
     labelOffset = tag.content.index + tag.content.raw.indexOf(label, url.length);
     assert(labelOffset >= tag.content.index);
@@ -159,7 +159,7 @@ function parseHrefTag(tag, context) {
 function parseRubyTag(tag, context) {
   const node = createInlineNode(Syntax.Ruby, tag.fullText, context);
   const pieces = tag.content.raw.split(/\s*,\s*/, 2);
-  assert(pieces.length == 2);
+  assert(pieces.length === 2);
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 

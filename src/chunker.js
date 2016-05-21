@@ -60,7 +60,7 @@ export function parseAsChunks(text) {
     }
 
     // block content
-    if (currentChunk && currentChunk.type == ChunkTypes.Block) {
+    if (currentChunk && currentChunk.type === ChunkTypes.Block) {
       currentChunk.lines.push(line);
       if (line.text.startsWith('//}')) {
         flushChunk(); // end of block
@@ -91,7 +91,7 @@ export function parseAsChunks(text) {
 
     // unordered list
     if (line.text.match(/^\s+\*+\s+/)) {
-      if (currentChunk && currentChunk.type == ChunkTypes.UnorderedList) {
+      if (currentChunk && currentChunk.type === ChunkTypes.UnorderedList) {
         currentChunk.lines.push(line);
       } else {
         flushChunk();
@@ -104,7 +104,7 @@ export function parseAsChunks(text) {
 
     // ordered list
     if (line.text.match(/^\s+\d+\.\s+/)) {
-      if (currentChunk && currentChunk.type == ChunkTypes.OrderedList) {
+      if (currentChunk && currentChunk.type === ChunkTypes.OrderedList) {
         currentChunk.lines.push(line);
       } else {
         flushChunk();
@@ -117,7 +117,7 @@ export function parseAsChunks(text) {
 
     // definition list
     if (line.text.match(/^\s+:\s+/)) {
-      if (currentChunk && currentChunk.type == ChunkTypes.DefinitionList) {
+      if (currentChunk && currentChunk.type === ChunkTypes.DefinitionList) {
         currentChunk.lines.push(line);
       } else {
         flushChunk();
@@ -130,19 +130,19 @@ export function parseAsChunks(text) {
 
     // continuation line of definition list
     if (line.text.match(/^\s+/) &&
-        currentChunk && currentChunk.type == ChunkTypes.DefinitionList) {
+        currentChunk && currentChunk.type === ChunkTypes.DefinitionList) {
       currentChunk.lines.push(line);
       return;
     }
 
     // empty line
-    if (line.text == '') {
+    if (line.text === '') {
       flushChunk();
       return;
     }
 
     // normal string
-    if (currentChunk && currentChunk.type == ChunkTypes.Paragraph) {
+    if (currentChunk && currentChunk.type === ChunkTypes.Paragraph) {
       currentChunk.lines.push(line);
     } else {
       flushChunk();

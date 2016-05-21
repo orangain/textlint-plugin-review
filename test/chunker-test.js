@@ -14,11 +14,11 @@ aaaa`);
 
     it('should parse text as a Paragraph', function () {
       const chunks = parseAsChunks(`test`);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const paragraph = chunks[0];
-      assert(paragraph.type == 'Paragraph');
-      assert(paragraph.raw == `test`);
-      assert(paragraph.lines.length == 1);
+      assert(paragraph.type === 'Paragraph');
+      assert(paragraph.raw === `test`);
+      assert(paragraph.lines.length === 1);
       assert.deepEqual(paragraph.lines, [
         {
           text: 'test',
@@ -34,11 +34,11 @@ aaaa`);
 test
 paragraph
 `);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const paragraph = chunks[0];
-      assert(paragraph.type == 'Paragraph');
-      assert(paragraph.raw == 'test\nparagraph\n');
-      assert(paragraph.lines.length == 2);
+      assert(paragraph.type === 'Paragraph');
+      assert(paragraph.raw === 'test\nparagraph\n');
+      assert(paragraph.lines.length === 2);
       assert.deepEqual(paragraph.lines, [
         {
           text: 'test',
@@ -60,7 +60,7 @@ paragraph
 paragraph
 
 another paragraph`);
-      assert(chunks.length == 2);
+      assert(chunks.length === 2);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Paragraph', 'Paragraph']);
       assert.deepEqual(chunks.map(chunk => chunk.raw),
@@ -73,7 +73,7 @@ another paragraph`);
 This is paragraph
 
 == Headings`);
-      assert(chunks.length == 3);
+      assert(chunks.length === 3);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Heading', 'Paragraph', 'Heading']);
       assert.deepEqual(chunks.map(chunk => chunk.raw),
@@ -87,7 +87,7 @@ paragraph
 #@# !!!
 
 another paragraph`);
-      assert(chunks.length == 3);
+      assert(chunks.length === 3);
       assert(chunks[0].raw.includes('???'));
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Comment', 'Paragraph', 'Paragraph']);
@@ -111,10 +111,10 @@ x = 2
 #@# comment in a list
 x += 1
 //}`);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const list = chunks[0];
-      assert(list.type == 'Block');
-      assert(list.lines.length == 5); // including open and close tags
+      assert(list.type === 'Block');
+      assert(list.lines.length === 5); // including open and close tags
       assert(list.lines[2].isComment);
       assert.deepEqual(list.lines.map(line => line.text), [
         '//list[][]{',
@@ -123,7 +123,7 @@ x += 1
         'x += 1',
         '//}',
       ]);
-      assert(list.raw == `//list[][]{
+      assert(list.raw === `//list[][]{
 x = 2
 #@# comment in a list
 x += 1
@@ -139,7 +139,7 @@ let x = 0;
 //}
 
 second line`);
-      assert(chunks.length == 3);
+      assert(chunks.length === 3);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Paragraph', 'Block', 'Paragraph']);
     });
@@ -150,7 +150,7 @@ second line`);
 //footnote[example][@<href>{http://example.com/}]
 
 second line`);
-      assert(chunks.length == 3);
+      assert(chunks.length === 3);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Paragraph', 'Block', 'Paragraph']);
     });
@@ -163,9 +163,9 @@ second line`);
  ** 第2の項目のネスト
  * 第3の項目
 `);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const list = chunks[0];
-      assert(list.type == 'UnorderedList');
+      assert(list.type === 'UnorderedList');
     });
 
     it('should parse lines starting with a number as a OrderedList', function () {
@@ -174,9 +174,9 @@ second line`);
  2. 第2の条件
  3. 第3の条件
 `);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const list = chunks[0];
-      assert(list.type == 'OrderedList');
+      assert(list.type === 'OrderedList');
     });
 
     it('should parse lines starting with : as a DefinitionList', function () {
@@ -191,9 +191,9 @@ second line`);
     Sun が作っている RISC CPU。
     CPU 数を増やすのが得意。
 `);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const list = chunks[0];
-      assert(list.type == 'DefinitionList');
+      assert(list.type === 'DefinitionList');
     });
 
     it('should parse comments as a Comment chunk', function () {
@@ -201,7 +201,7 @@ second line`);
 #@# This is a comment.
 #@# Independent comment lines form a Comment chunk.
 `);
-      assert(chunks.length == 2);
+      assert(chunks.length === 2);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Comment', 'Comment']);
       assert.deepEqual(chunks.map(chunk => chunk.lines.length), [1, 1]);
@@ -213,7 +213,7 @@ second line`);
 #@# Independent comment lines form a Comment chunk.
 This is a paragraph immediately after a comment.
 `);
-      assert(chunks.length == 3);
+      assert(chunks.length === 3);
       assert.deepEqual(chunks.map(chunk => chunk.type),
                        ['Comment', 'Comment', 'Paragraph']);
       assert.deepEqual(chunks.map(chunk => chunk.lines.length),
@@ -227,10 +227,10 @@ This is a paragraph immediately before a comment.
 #@# Comment lines in a paragraph does not form a Comment chunk.
 This is a paragraph immediately after a comment.
 `);
-      assert(chunks.length == 1);
+      assert(chunks.length === 1);
       const paragraph = chunks[0];
-      assert(paragraph.type == 'Paragraph');
-      assert(paragraph.lines.length == 4);
+      assert(paragraph.type === 'Paragraph');
+      assert(paragraph.lines.length === 4);
       assert.deepEqual(paragraph.lines.map(line => line.isComment),
                        [undefined, true, true, undefined]);
     });

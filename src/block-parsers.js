@@ -104,7 +104,7 @@ function parseTableContent(line) {
       startColumn += 1;
     }
 
-    if (cellContent == '') {
+    if (cellContent === '') {
       continue;
     }
 
@@ -209,7 +209,7 @@ export function parseBlockWithContent(block, type) {
   };
 
   chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
-    if (line.text == '') {
+    if (line.text === '') {
       flushParagraph();
     } else {
       lines.push(line);

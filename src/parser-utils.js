@@ -14,7 +14,7 @@ export function parseBlockArgs(argsText, offset) {
   const args = [];
 
   let openIndex = 0;
-  while (argsText[openIndex] == '[') {
+  while (argsText[openIndex] === '[') {
     let closeIndex = findCloseBracket(argsText, ']', openIndex);
 
     args.push({
