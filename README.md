@@ -1,4 +1,4 @@
-# textlint-plugin-review [![Build Status](https://travis-ci.org/orangain/textlint-plugin-review.svg?branch=master)](https://travis-ci.org/orangain/textlint-plugin-review)
+# textlint-plugin-review [![Build Status](https://travis-ci.org/orangain/textlint-plugin-review.svg?branch=master)](https://travis-ci.org/orangain/textlint-plugin-review) [![npm version](https://badge.fury.io/js/textlint-plugin-review.svg)](https://badge.fury.io/js/textlint-plugin-review)
 
 Add [Re:VIEW](https://github.com/kmuto/review) support for [textlint](https://github.com/textlint/textlint "textlint").
 
