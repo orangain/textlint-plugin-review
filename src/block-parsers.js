@@ -1,3 +1,4 @@
+// LICENSE : MIT
 'use strict';
 import { Syntax } from './mapping';
 import { parseText, parseLine } from './inline-parsers';

@@ -1,3 +1,4 @@
+// LICENSE : MIT
 'use strict';
 import assert from 'power-assert';
 import { parseBlockArgs, findInlineTag } from '../src/parser-utils';

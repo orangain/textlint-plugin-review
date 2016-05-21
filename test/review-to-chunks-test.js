@@ -1,6 +1,8 @@
+// LICENSE : MIT
 'use strict';
 import assert from 'power-assert';
 import { parseAsChunks } from '../src/review-to-chunks';
+
 describe('review-to-chunks', function () {
   describe('#parseAsChunks', function () {
     it('should return chunks', function () {

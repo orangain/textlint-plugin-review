@@ -1,3 +1,4 @@
+// LICENSE : MIT
 'use strict';
 
 export const ChunkTypes = {
