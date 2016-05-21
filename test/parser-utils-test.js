@@ -10,7 +10,6 @@ describe('parser-utils', function () {
         name: 'b',
         content: {
           raw: 'BBB',
-          value: 'BBB',
           index: 5,
         },
         fullText: '@<b>{BBB}',
@@ -25,7 +24,6 @@ describe('parser-utils', function () {
         name: 'b',
         content: {
           raw: 'BB\\}B',
-          value: 'BB}B',
           index: 5,
         },
         fullText: '@<b>{BB\\}B}',
@@ -40,7 +38,6 @@ describe('parser-utils', function () {
         name: 'b',
         content: {
           raw: 'BBB',
-          value: 'BBB',
           index: 5,
         },
         fullText: '@<b>{BBB}',
@@ -155,6 +152,22 @@ describe('parser-utils', function () {
       assert(link.children.length == 1);
       assert(link.children[0].type == 'Str');
       assert(link.children[0].raw == 'google');
+      assert(link.children[0].loc.start.line == 1);
+      assert(link.children[0].loc.start.column == 37);
+    });
+
+    it('should parse href tag as a Link node with label contains escape character', function () {
+      const nodes = parseText(`See: @<href>{http://www.google.com/, {google\\}}.`, context);
+      assert(nodes.length == 3);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Str', 'Link', 'Str']);
+      const link = nodes[1];
+      assert(link.url == 'http://www.google.com/');
+      assert(link.raw == '@<href>{http://www.google.com/, {google\\}}');
+      assert(link.children.length == 1);
+      assert(link.children[0].type == 'Str');
+      assert(link.children[0].raw == '{google\\}');
+      assert(link.children[0].value == '{google}');
       assert(link.children[0].loc.start.line == 1);
       assert(link.children[0].loc.start.column == 37);
     });

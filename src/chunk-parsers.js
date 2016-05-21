@@ -42,7 +42,7 @@ export function parseHeading(chunk) {
   const label = match[2].trim();
   const labelOffset = line.text.indexOf(label);
   assert(labelOffset >= 0);
-  const strNode = createStrNode(label, label, contextFromLine(line, labelOffset));
+  const strNode = createStrNode(label, contextFromLine(line, labelOffset));
   const heading = createNodeFromLine(Syntax.Heading, line);
   heading.depth = depth;
   heading.label = label;

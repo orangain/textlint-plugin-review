@@ -147,8 +147,8 @@ function parseInlineNonTextTag(type, tag, context) {
  */
 function parseInlineTextTag(type, tag, context) {
   const node = createInlineNode(type, tag.fullText, context);
-  const strNode = createStrNode(tag.content.raw, tag.content.value,
-                                offsetContext(context, tag.content.index));
+  const strContext = contextNeedsUnescapeBraces(offsetContext(context, tag.content.index));
+  const strNode = createStrNode(tag.content.raw, strContext);
   node.children = [strNode];
   return node;
 }
@@ -175,7 +175,8 @@ function parseHrefTag(tag, context) {
     labelOffset = tag.content.index;
   }
 
-  const strNode = createStrNode(label, label, offsetContext(context, labelOffset));
+  const strContext = contextNeedsUnescapeBraces(offsetContext(context, labelOffset));
+  const strNode = createStrNode(label, strContext);
 
   node.url = url;
   node.children = [strNode];
@@ -196,7 +197,8 @@ function parseRubyTag(tag, context) {
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 
-  const strNode = createStrNode(rubyBase, rubyBase, context);
+  const strContext = contextNeedsUnescapeBraces(context);
+  const strNode = createStrNode(rubyBase, strContext);
 
   node.rubyText = rubyText;
   node.children = [strNode];
@@ -217,8 +219,7 @@ export function parseText(text, context) {
   let tag;
   while (tag = findInlineTag(text)) {
     if (tag.precedingText != '') {
-      const node = createStrNode(tag.precedingText, tag.precedingText,
-                                 context);
+      const node = createStrNode(tag.precedingText, context);
       nodes.push(node);
       context = offsetContext(context, node.raw.length);
     }
@@ -234,7 +235,7 @@ export function parseText(text, context) {
   }
 
   if (text.length) {
-    const node = createStrNode(text, text, context);
+    const node = createStrNode(text, context);
     nodes.push(node);
   }
 
@@ -280,7 +281,6 @@ export function findInlineTag(text) {
     name: match[1],
     content: {
       raw: rawContent,
-      value: unescapeContent(rawContent),
       index: contentStartIndex - match.index,
     },
     fullText: text.substr(match.index, closeIndex - match.index + 1),
@@ -289,10 +289,6 @@ export function findInlineTag(text) {
   };
 
   return tag;
-
-  function unescapeContent(text) {
-    return text.replace(/\\\}/g, '}');
-  };
 }
 
 /**
@@ -351,14 +347,22 @@ export function createNodeFromLine(type, line) {
 /**
  * create Str TxtNode.
  * @param {string} raw - Raw text of node
- * @param {string} value - like raw but does not contain escape character
  * @param {Context} context - context of the node
  * @return {TxtNode} Created TxtNode
  */
-export function createStrNode(raw, value, context) {
-  assert(!value.match(/[\r\n]/));
-
+export function createStrNode(raw, context) {
   const node = createInlineNode(Syntax.Str, raw, context);
+
+  let value = raw;
+
+  if (context.unescapeBraces) {
+    value = value.replace(/\\\}/g, '}');
+  }
+
+  if (context.unescapeBrackets) {
+    value = value.replace(/\\\]/g, ']');
+  }
+
   node.value = value;
   return node;
 }
@@ -390,6 +394,12 @@ export function createInlineNode(type, raw, context) {
   };
 }
 
+/**
+ * create context from Line.
+ * @param {Line} line - Line object
+ * @param {number} [offset=0] - Column offset
+ * @return {Context} Created Context object
+ */
 export function contextFromLine(line, offset=0) {
   return {
     startIndex: line.startIndex + offset,
@@ -398,9 +408,26 @@ export function contextFromLine(line, offset=0) {
   };
 }
 
+/**
+ * create new context with offset from original context.
+ * @param {Context} originalContext - Original Context object
+ * @param {number} offset - Column offset
+ * @return {Context} New Context object
+ */
 function offsetContext(originalContext, offset) {
   const newContext = Object.assign({}, originalContext);
   newContext.startIndex += offset;
   newContext.startColumn += offset;
+  return newContext;
+}
+
+/**
+ * create new context with unescapeBraces = true.
+ * @param {Context} originalContext - Original Context object
+ * @return {Context} New Context object
+ */
+function contextNeedsUnescapeBraces(originalContext) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.unescapeBraces = true;
   return newContext;
 }
