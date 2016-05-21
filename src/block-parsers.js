@@ -48,7 +48,7 @@ function withCaption(captionIndex, blockParser) {
   return function (block) {
     const node = blockParser(block);
 
-    if (captionIndex != null) {
+    if (captionIndex !== null) {
       const blockArg = block.args[captionIndex];
       if (blockArg) {
         const caption = parseBlockArg(Syntax.Caption, blockArg, block.chunk.lines[0]);

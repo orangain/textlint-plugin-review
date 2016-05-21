@@ -183,7 +183,7 @@ export function parseText(text, context) {
   const nodes = [];
   let tag;
   while (tag = findInlineTag(text)) {
-    if (tag.precedingText != '') {
+    if (tag.precedingText !== '') {
       const node = createStrNode(tag.precedingText, context);
       nodes.push(node);
       context = offsetContext(context, node.raw.length);

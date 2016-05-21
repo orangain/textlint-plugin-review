@@ -19,7 +19,7 @@ export function parse(text) {
   chunks.forEach(chunk => {
     const parser = ChunkParsers[chunk.type];
     const node = parser(chunk);
-    if (node != null) {
+    if (node !== null) {
       nodes.push(node);
     }
   });

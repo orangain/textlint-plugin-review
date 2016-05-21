@@ -71,7 +71,7 @@ function findCloseBracket(text, character, fromIndex=0) {
       break; // closing } not found. this is normal string not a inline tag
     }
 
-    if (text[closeIndex - 1] != '\\') {
+    if (text[closeIndex - 1] !== '\\') {
       break; // found closing } which is not escaped
     }
 
