@@ -171,12 +171,12 @@ function parseInlineTextTag(type, tag, startIndex, lineNumber, startColumn) {
 function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
   const node = createInlineNode(Syntax.Href, tag.fullText, startIndex, lineNumber, startColumn);
 
-  const pieces = tag.content.raw.split(/,/, 2);
+  const pieces = tag.content.raw.split(/\s*,\s*/, 2);
   const url = pieces[0];
   let label;
   let labelOffset;
   if (pieces.length == 2) {
-    label = pieces[1].replace(/^\s+/, '');
+    label = pieces[1];
     labelOffset = tag.content.index + tag.content.raw.indexOf(label, url.length);
     assert(labelOffset >= tag.content.index);
   } else {
@@ -203,6 +203,16 @@ function parseHrefTag(tag, startIndex, lineNumber, startColumn) {
  */
 function parseRubyTag(tag, startIndex, lineNumber, startColumn) {
   const node = createInlineNode(Syntax.Ruby, tag.fullText, startIndex, lineNumber, startColumn);
+  const pieces = tag.content.raw.split(/\s*,\s*/, 2);
+  assert(pieces.length == 2);
+  const rubyBase = pieces[0];
+  const rubyText = pieces[1];
+
+  const strNode = createStrNode(rubyBase, rubyBase, startIndex, lineNumber, startColumn);
+
+  node.rubyText = rubyText;
+  node.children = [strNode];
+
   return node;
 }
 

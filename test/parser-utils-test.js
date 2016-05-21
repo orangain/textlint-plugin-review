@@ -111,5 +111,17 @@ describe('parser-utils', function () {
       assert(link.children[0].loc.start.line == 1);
       assert(link.children[0].loc.start.column == 37);
     });
+
+    it('should parse ruby tag as a Ruby node', function () {
+      const nodes = parseText(`He is @<ruby>{Matsumoto, Matz}.`, 0, 1);
+      assert(nodes.length == 3);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Str', 'Ruby', 'Str']);
+      const ruby = nodes[1];
+      assert(ruby.rubyText == 'Matz');
+      assert(ruby.children.length == 1);
+      assert(ruby.children[0].type == 'Str');
+      assert(ruby.children[0].raw == 'Matsumoto');
+    });
   });
 });
