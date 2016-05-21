@@ -1,9 +1,9 @@
 // LICENSE : MIT
 'use strict';
 import assert from 'power-assert';
-import { parseAsChunks } from '../src/review-to-chunks';
+import { parseAsChunks } from '../src/chunker';
 
-describe('review-to-chunks', function () {
+describe('chunker', function () {
   describe('#parseAsChunks', function () {
     it('should return chunks', function () {
       const chunks = parseAsChunks(`= Text

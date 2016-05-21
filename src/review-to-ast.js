@@ -4,7 +4,7 @@ import assert from 'assert';
 import { traverse } from 'txt-ast-traverse';
 import { test as testTextlintAST } from 'textlint-ast-test';
 import { Syntax } from './mapping';
-import { parseAsChunks } from './review-to-chunks';
+import { parseAsChunks } from './chunker';
 import { ChunkParsers } from './chunk-parsers';
 
 /**
