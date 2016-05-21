@@ -1,9 +1,10 @@
 'use strict';
-import assert from 'power-assert';
+import assert from 'assert';
 import { Syntax } from './mapping';
 import { BlockParsers } from './block-parsers';
+import { parseText, parseLine } from './inline-parsers';
 import {
-  parseText, parseLine, createNodeFromChunk, createNodeFromLine, createInlineNode
+  parseBlockArgs, createNodeFromChunk, createNodeFromLine, createStrNode, contextFromLine
 } from './parser-utils';
 
 export const ChunkParsers = {
@@ -35,15 +36,14 @@ export function parseParagraph(chunk) {
  * @return {TxtNode} Heading node
  */
 export function parseHeading(chunk) {
+  assert(chunk.lines.length == 1);
   const line = chunk.lines[0];
   const match = line.text.match(/(=+)\S*\s*(.*)/);  // \S* skip [column] and {ch01}
   const depth = match[1].length;
   const label = match[2].trim();
   const labelOffset = line.text.indexOf(label);
   assert(labelOffset >= 0);
-  const strNode = createInlineNode(Syntax.Str, label, line.startIndex + labelOffset,
-                             line.lineNumber, labelOffset);
-
+  const strNode = createStrNode(label, contextFromLine(line, labelOffset));
   const heading = createNodeFromLine(Syntax.Heading, line);
   heading.depth = depth;
   heading.label = label;
@@ -65,8 +65,8 @@ export function parseList(prefixRegex, chunk) {
     itemNode.children = [];
     const itemText = line.text.replace(prefixRegex, '');
     const startColumn = line.text.length - itemText.length;
-    Array.prototype.push.apply(itemNode.children, parseText(
-      itemText, line.startIndex + startColumn, line.lineNumber, startColumn));
+    Array.prototype.push.apply(itemNode.children,
+                               parseText(itemText, contextFromLine(line, startColumn)));
 
     node.children.push(itemNode);
   });
@@ -93,24 +93,4 @@ export function parseBlock(chunk) {
   }
 
   return parser(block);
-}
-
-/**
- * parse arguments of a block like "[foo][This is foo]".
- * @param {string} argsText - String to parse
- * @param {number} offset - Offset index where the args starts with in the line
- * @return {[Arg]} Array of Args
- */
-function parseBlockArgs(argsText, offset) {
-  const argRegex = /\[(.*?)\]/g;
-  const args = [];
-  let match;
-  while (match = argRegex.exec(argsText)) {
-    args.push({
-      value: match[1],
-      startColumn: offset + match.index + 1,
-    });
-  }
-
-  return args;
 }

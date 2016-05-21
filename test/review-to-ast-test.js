@@ -32,6 +32,7 @@ aaaa`);
           {
             type: 'Str',
             raw: 'test',
+            value: 'test',
             range: [0, 4],
             loc: {
               start: {
@@ -76,6 +77,25 @@ another paragraph`);
                        ['Paragraph', 'Paragraph']);
     });
 
+    it('should not split paragraph with comments', function () {
+      const result = parse(`test
+paragraph
+#@# This is a comment
+continuation line`);
+      assert(result.raw == `test
+paragraph
+#@# This is a comment
+continuation line`);
+      assert(result.children.length == 1);
+      const paragraph = result.children[0];
+      assert.deepEqual(paragraph.children.map(node => node.type),
+                       ['Str', 'Str', 'Str']);
+      assert.deepEqual(paragraph.children.map(node => node.raw),
+                       ['test', 'paragraph', 'continuation line']);
+      assert.deepEqual(paragraph.children.map(node => node.loc.start.line),
+                       [1, 2, 4]);
+    });
+
     it('should parse equal signs as headings', function () {
       const result = parse(`={ch01} Test
 
@@ -83,6 +103,7 @@ another paragraph`);
       const heading1 = result.children[0];
       assert(heading1.type == 'Header');
       assert(heading1.depth == 1);
+      assert(heading1.raw == '={ch01} Test');
       assert(heading1.children[0].type == 'Str');
       assert(heading1.children[0].raw == 'Test');
       const heading2 = result.children[result.children.length - 1];
@@ -241,6 +262,45 @@ Name	Value
       assert(footnote.raw == '//footnote[foo][This is a footnote text.]');
       assert(footnote.children[0].type == 'Paragraph');
       assert(footnote.children[0].raw == 'This is a footnote text.');
+    });
+
+    it('should parse footnote having inline tags', function () {
+      const result = parse(`//footnote[foo][See: @<href>{http://example.com/}.]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      assert(footnote.raw == '//footnote[foo][See: @<href>{http://example.com/}.]');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.loc.start.column == 16);
+      assert(paragraph.raw == 'See: @<href>{http://example.com/}.');
+      assert(paragraph.children.length == 3);
+    });
+
+    it('should parse footnote having escape characters', function () {
+      const result = parse(`//footnote[foo][See: [1\\]]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 1);
+      const code = paragraph.children[0];
+      assert(code.type == 'Str');
+      assert(code.raw == 'See: [1\\]');
+      assert(code.value == 'See: [1]');
+    });
+
+    it('should parse footnote having more escape characters', function () {
+      const result = parse(`//footnote[foo][The object should be @<code>{{x: a[1\\]\\}}.]`);
+      const footnote = result.children[0];
+      assert(footnote.type == 'Footnote');
+      assert(footnote.raw == '//footnote[foo][The object should be @<code>{{x: a[1\\]\\}}.]');
+      const paragraph = footnote.children[0];
+      assert(paragraph.type == 'Paragraph');
+      assert(paragraph.children.length == 3);
+      const code = paragraph.children[1];
+      assert(code.type == 'Code');
+      assert(code.raw == '@<code>{{x: a[1\\]\\}}');
+      assert(code.value == '{x: a[1]}');
     });
 
     it('should parse lines starting with * as a List', function () {

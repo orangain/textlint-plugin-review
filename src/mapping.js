@@ -2,7 +2,9 @@
 'use strict';
 
 export const Syntax = {
-  // ReVIEW name => textlint name
+  // human readable name in ReVIEW's context => textlint name
+
+  // textlint standard block tags
   Document: 'Document',
   Heading: 'Header',
   Paragraph: 'Paragraph',
@@ -12,19 +14,43 @@ export const Syntax = {
   ListItem: 'ListItem',
   Table: 'Table',
   TableCell: 'ListItem',
-  CodeBlock: 'CodeBlock',
+  CodeBlock: 'CodeBlock', // Though word 'list' is used in ReVIEW's context, it's confusing
   Image: 'Image',
   Quote: 'BlockQuote',
 
-  // inline
+  // textlint standard inline tags
   Str: 'Str',
   Break: 'Break',
   Code: 'Code',
-  Link: 'Link',
+  Href: 'Link',
+  Keyword: 'Strong',
+  Bouten: 'Emphasis',
+  Amikake: 'Emphasis',
+  Underline: 'Emphasis',
+  Bold: 'Strong',
+  Italic: 'Emphasis',
+  Strong: 'Strong',
+  Emphasis: 'Emphasis',
+  TeletypeItalic: 'Emphasis',
+  TeletypeBold: 'Strong',
 
-  // specific to review-plugin
-  Footnote: 'Footnote', // footnote
+  // ReVIEW specific block tags
+  // NOTE: 'Block' means review's block having no special meanings, whose children are Paragraphs.
+  Footnote: 'Footnote', // footnote block
   Caption: 'Caption', // caption text of image, table and code block
-  Lead: 'Block', // corespond to review's block having no special meanings
+  Lead: 'Block',
   ShortColumn: 'Block',
+
+  // ReVIEW specific inline tags
+  // NOTE: 'Inline' means review's inline tag having no special meanings, whose children are Strs.
+  //       'Reference' means reference to other tag, which have no child.
+  //       'NonString' means non-string stuffs like character number, equation, etc.
+  Teletype: 'Inline',
+  TateChuYoko: 'Inline',
+  Reference: 'Reference',
+  Ruby: 'Ruby', // ruby in Japanese
+  UnicodeChar: 'NonString',
+  Icon: 'Image',
+  Math: 'NonString',
+  Raw: 'NonString',
 };

@@ -2,6 +2,7 @@
 'use strict';
 import assert from 'assert';
 import { traverse } from 'txt-ast-traverse';
+import { isTxtAST } from 'textlint-ast-test';
 import { Syntax } from './mapping';
 import { parseAsChunks } from './review-to-chunks';
 import { ChunkParsers } from './chunk-parsers';
@@ -12,13 +13,60 @@ import { ChunkParsers } from './chunk-parsers';
  * @return {TxtNode}
  */
 export function parse(text) {
-  const ast = parseDocument(text);
+  const lines = text.match(/(?:.*\r?\n|.+$)/g); // split lines preserving line endings
+  const chunks = parseAsChunks(text);
+  const nodes = [];
+  chunks.forEach(chunk => {
+    const parser = ChunkParsers[chunk.type];
+    const node = parser(chunk);
+    if (node != null) {
+      nodes.push(node);
+    }
+  });
 
-  var prevNode = ast;
+  const ast = {
+    type: Syntax.Document,
+    raw: text,
+    range: [0, text.length],
+    loc: {
+      start: {
+        line: 1,
+        column: 0,
+      },
+      end: {
+        line: lines.length,
+        column: lines[lines.length - 1].length,
+      },
+    },
+    children: nodes,
+  };
+
+  validateAST(ast, text, lines);
+
+  return ast;
+}
+
+function validateAST(ast, text, lines) {
+  //  AST
+  assert(isTxtAST(ast));
+
+  let prevNode = ast;
   traverse(ast, {
     enter(node) {
       try {
-        assert.deepEqual(node.raw, text.slice(node.range[0], node.range[1]));
+        assert(node.raw == text.slice(node.range[0], node.range[1]));
+
+        if (node.loc.start.line == node.loc.end.line) {
+          // single line
+          const line = lines[node.loc.start.line - 1];
+          assert(node.raw == line.slice(node.loc.start.column, node.loc.end.column));
+        } else {
+          // multi line
+          const firstLine = lines[node.loc.start.line - 1];
+          assert(node.raw.startsWith(firstLine.substr(node.loc.start.column)));
+          const lastLine = lines[node.loc.end.line - 1];
+          assert(node.raw.endsWith(lastLine.substr(0, node.loc.end.column)));
+        }
       } catch (ex) {
         console.log('type: %s, line: %s, column: %s',
                     prevNode.type, prevNode.loc.start.line, prevNode.loc.start.column);
@@ -31,45 +79,4 @@ export function parse(text) {
     },
   });
 
-  return ast;
-}
-
-/**
- * parse whole document and return ast mapped location info.
- * @param {string} text
- * @return {TxtNode}
- */
-function parseDocument(text) {
-  const lines = text.match(/(?:.*\r?\n|.+$)/g); // split lines preserving line endings
-  const chunks = parseAsChunks(text);
-  const nodes = [];
-  chunks.forEach(chunk => {
-    const parser = ChunkParsers[chunk.type];
-    const node = parser(chunk);
-    if (node != null) {
-      nodes.push(node);
-    }
-  });
-
-  const lastChunk = chunks[chunks.length - 1];
-  const lastLine = lastChunk.lines[lastChunk.lines.length - 1];
-
-  const ast = {
-    type: Syntax.Document,
-    raw: text,
-    range: [0, text.length],
-    loc: {
-      start: {
-        line: 1,
-        column: 0,
-      },
-      end: {
-        line: lastLine.lineNumber,
-        column: lastLine.text.length,
-      },
-    },
-    children: nodes,
-  };
-
-  return ast;
 }

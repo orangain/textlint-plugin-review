@@ -1,144 +1,83 @@
 'use strict';
-import assert from 'power-assert';
+import assert from 'assert';
 import { Syntax } from './mapping';
 
 /**
- * parse single argument of a block as a TxtNode
- * @param {string} type - Type of node
- * @param {Arg} blockArg - Arg of a block to parse
- * @param {Line} line - line where Arg exists
- * @return {TxtNode}
+ * parse arguments of a block like "[foo][This is foo]".
+ * @param {string} argsText - String to parse
+ * @param {number} offset - Offset index where the args starts with in the line
+ * @return {[Arg]} Array of Args
  */
-export function parseBlockArg(type, blockArg, line) {
-  const argText = blockArg.value;
-  if (!argText) {
-    return null;
+export function parseBlockArgs(argsText, offset) {
+  const argRegex = /\[(.*?)\]/g;
+  const args = [];
+
+  let openIndex = 0;
+  while (argsText[openIndex] == '[') {
+    let closeIndex = findCloseBracket(argsText, ']', openIndex);
+
+    args.push({
+      value: argsText.slice(openIndex + 1, closeIndex),
+      startColumn: offset + openIndex + 1,
+    });
+
+    openIndex = closeIndex + 1;
   }
 
-  const startColumn = blockArg.startColumn;
-  const argNode = createInlineNode(type, argText, line.startIndex + startColumn,
-                                   line.lineNumber, startColumn);
-  argNode.children = parseText(argText, line.startIndex + startColumn,
-                               line.lineNumber, startColumn);
-  return argNode;
+  return args;
 }
 
 /**
- * parse a block with content. which is parsed as paragraphs.
- * @param {Block} block - line to parse
- * @param {string} type - Type of node
- * @return {[TxtNode]} TxtNode
+ * find inline tag from text
+ * @param {string} text - Text to parse
+ * @return {Tag} the first Tag object if inline tag found, otherwise null
  */
-export function parseBlockWithContent(block, type) {
-  const chunk = block.chunk;
-  const node = createNodeFromChunk(chunk, type);
-  node.children = [];
-
-  let lines = [];
-  const flushParagraph = function () {
-    if (lines.length > 0) {
-      const paragraph = createNodeFromLinesInChunk(Syntax.Paragraph, lines, chunk);
-      paragraph.children = [];
-      lines.forEach(line => {
-        Array.prototype.push.apply(paragraph.children, parseLine(line));
-      });
-      node.children.push(paragraph);
-    }
-
-    lines = [];
-  };
-
-  chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
-    if (line.text == '') {
-      flushParagraph();
-    } else {
-      lines.push(line);
-    }
-  });
-
-  flushParagraph();
-
-  return node;
-}
-
-/**
- * parse a line.
- * @param {Line} line - line to parse
- * @return {[TxtNode]} TxtNodes
- */
-export function parseLine(line) {
-  return parseText(line.text, line.startIndex, line.lineNumber);
-}
-
-/**
- * parse inline tags and StrNodes from line.
- * @param {string} text - Text of the line
- * @param {number} startIndex - Global start index of the line
- * @param {number} lineNumber - Line number of the line
- * @param {number} [startColumn=0] - Start column in the line
- * @return {[TxtNode]} TxtNodes in the line
- */
-export function parseText(text, startIndex, lineNumber, startColumn=0) {
-  assert(!text.match(/[\r\n]/));
-
-  const createInlineNonStrNode = function (type, text) {
-    return createInlineNode(type, text, startIndex, lineNumber, startColumn);
-  };
-
-  const createInlineStrNode = function (text, offset=0) {
-    return createInlineNode(Syntax.Str, text, startIndex + offset, lineNumber,
-                            startColumn + offset);
-  };
-
-  const nodes = [];
-  let match;
-
-  // TODO: Support escape character \} in { }
-  while (match = text.match(/@<(\w+)>\{(.*?)\}/)) {
-    if (match.index > 0) {
-      const node = createInlineStrNode(text.substr(0, match.index));
-      nodes.push(node);
-      startIndex += node.raw.length;
-      startColumn += node.raw.length;
-    }
-
-    const markup = { name: match[1], content: match[2] };
-    if (markup.name == 'code') {
-      const node = createInlineNonStrNode(Syntax.Code, match[0]);
-      nodes.push(node);
-    } else if (markup.name == 'href') {
-      const pieces = markup.content.split(/,/, 2);
-      const url = pieces[0];
-      const label = pieces.length == 2 ? pieces[1] : url;
-
-      const linkNode = createInlineNonStrNode(Syntax.Link, match[0]);
-      const labelOffset = match[0].indexOf(label);
-      assert(labelOffset >= 0);
-      const strNode = createInlineStrNode(label, labelOffset);
-      linkNode.children = [strNode];
-      nodes.push(linkNode);
-    } else if (markup.name == 'br') {
-      const emptyBreakNode = createInlineNonStrNode(Syntax.Break, match[0]);
-      nodes.push(emptyBreakNode);
-    } else if (['img', 'list', 'hd', 'table', 'fn'].indexOf(markup.name) >= 0) {
-      // do nothing
-    } else {
-      const offset = ('@<' + markup.name + '>{').length;
-      const node = createInlineStrNode(markup.content, offset);
-      nodes.push(node);
-    }
-
-    startIndex += match[0].length;
-    startColumn += match[0].length;
-    text = text.substr(match.index + match[0].length);
+export function findInlineTag(text) {
+  const match = text.match(/@<(\w+)>\{/);
+  if (!match) {
+    return null; // inline tag not found
   }
 
-  if (text.length) {
-    const node = createInlineStrNode(text);
-    nodes.push(node);
+  // We need to ignore escaped closing brace \}.
+  // As look-behind expression is relatively new, use indexOf()
+  let contentStartIndex = match.index + match[0].length;
+  let closeIndex = findCloseBracket(text, '}', contentStartIndex);
+  if (closeIndex < 0) {
+    return null; // not found
   }
 
-  return nodes;
+  const contentCloseIndex = closeIndex - 1;
+  const rawContent = text.substr(contentStartIndex, contentCloseIndex - contentStartIndex + 1);
+  const tag = {
+    name: match[1],
+    content: {
+      raw: rawContent,
+      index: contentStartIndex - match.index,
+    },
+    fullText: text.substr(match.index, closeIndex - match.index + 1),
+    precedingText: text.substr(0, match.index),
+    followingText: text.substr(closeIndex + 1),
+  };
+
+  return tag;
+}
+
+function findCloseBracket(text, character, fromIndex=0) {
+  let closeIndex;
+  while (true) {
+    closeIndex = text.indexOf(character, fromIndex);
+    if (closeIndex < 0) {
+      break; // closing } not found. this is normal string not a inline tag
+    }
+
+    if (text[closeIndex - 1] != '\\') {
+      break; // found closing } which is not escaped
+    }
+
+    fromIndex = closeIndex + 1;
+  }
+
+  return closeIndex;
 }
 
 /**
@@ -191,34 +130,111 @@ export function createNodeFromLinesInChunk(type, lines, chunk) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromLine(type, line) {
-  return createInlineNode(type, line.text, line.startIndex, line.lineNumber);
+  return createInlineNode(type, line.text, contextFromLine(line));
+}
+
+/**
+ * create Str TxtNode.
+ * @param {string} raw - Raw text of node
+ * @param {Context} context - context of the node
+ * @return {TxtNode} Created TxtNode
+ */
+export function createStrNode(raw, context) {
+  const node = createInlineNode(Syntax.Str, raw, context);
+  node.value = unescapeValue(raw, context);
+  return node;
+}
+
+/**
+ * unescape value considering context
+ * @param {string} value - Value to unescape
+ * @param {Context} context - context of unescape
+ * @return {string} Unescaped value
+ */
+export function unescapeValue(value, context) {
+  if (context.unescapeBraces) {
+    value = value.replace(/\\\}/g, '}');
+  }
+
+  if (context.unescapeBrackets) {
+    value = value.replace(/\\\]/g, ']');
+  }
+
+  return value;
 }
 
 /**
  * create inline TxtNode.
  * @param {string} type - Type of node
- * @param {string} text - Raw text of node
- * @param {number} startIndex - Start index in the document
- * @param {number} lineNumber - Line number of node
- * @param {number} [startColumn=0] - Start column in the line
+ * @param {string} raw - Raw text of node
+ * @param {Context} context - context of the node
  * @return {TxtNode} Created TxtNode
  */
-export function createInlineNode(type, text, startIndex, lineNumber, startColumn=0) {
-  assert(!text.match(/[\r\n]/));
+export function createInlineNode(type, raw, context) {
+  assert(!raw.match(/[\r\n]/));
 
   return {
     type: type,
-    raw: text,
-    range: [startIndex, startIndex + text.length],
+    raw: raw,
+    range: [context.startIndex, context.startIndex + raw.length],
     loc: {
       start: {
-        line: lineNumber,
-        column: startColumn,
+        line: context.lineNumber,
+        column: context.startColumn,
       },
       end: {
-        line: lineNumber,
-        column: startColumn + text.length,
+        line: context.lineNumber,
+        column: context.startColumn + raw.length,
       },
     },
   };
+}
+
+/**
+ * create context from Line.
+ * @param {Line} line - Line object
+ * @param {number} [offset=0] - Column offset
+ * @return {Context} Created Context object
+ */
+export function contextFromLine(line, offset=0) {
+  return {
+    startIndex: line.startIndex + offset,
+    lineNumber: line.lineNumber,
+    startColumn: offset,
+  };
+}
+
+/**
+ * create new context with offset from original context.
+ * @param {Context} originalContext - Original Context object
+ * @param {number} offset - Column offset
+ * @return {Context} New Context object
+ */
+export function offsetContext(originalContext, offset) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.startIndex += offset;
+  newContext.startColumn += offset;
+  return newContext;
+}
+
+/**
+ * create new context with unescapeBraces = true.
+ * @param {Context} originalContext - Original Context object
+ * @return {Context} New Context object
+ */
+export function contextNeedsUnescapeBraces(originalContext) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.unescapeBraces = true;
+  return newContext;
+}
+
+/**
+ * create new context with unescapeBrackets = true.
+ * @param {Context} originalContext - Original Context object
+ * @return {Context} New Context object
+ */
+export function contextNeedsUnescapeBrackets(originalContext) {
+  const newContext = Object.assign({}, originalContext);
+  newContext.unescapeBrackets = true;
+  return newContext;
 }
