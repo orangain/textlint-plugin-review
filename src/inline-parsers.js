@@ -1,6 +1,6 @@
 // LICENSE : MIT
 'use strict';
-import assert from 'power-assert';
+import assert from 'assert';
 import { Syntax } from './mapping';
 import {
   parseBlockArg, findInlineTag, createNodeFromChunk, createCommentNodeFromLine, createStrNode,
