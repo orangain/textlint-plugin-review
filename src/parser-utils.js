@@ -14,7 +14,7 @@ export function parseBlockArgs(argsText, offset) {
   const args = [];
 
   let openIndex = 0;
-  while (argsText[openIndex] == '[') {
+  while (argsText[openIndex] === '[') {
     let closeIndex = findCloseBracket(argsText, ']', openIndex);
 
     args.push({
@@ -71,7 +71,7 @@ function findCloseBracket(text, character, fromIndex=0) {
       break; // closing } not found. this is normal string not a inline tag
     }
 
-    if (text[closeIndex - 1] != '\\') {
+    if (text[closeIndex - 1] !== '\\') {
       break; // found closing } which is not escaped
     }
 
@@ -131,7 +131,28 @@ export function createNodeFromLinesInChunk(type, lines, chunk) {
  * @return {TxtNode} Created TxtNode
  */
 export function createNodeFromLine(type, line) {
+  assert(!line.isComment);
   return createInlineNode(type, line.text, contextFromLine(line));
+}
+
+/**
+ * create comment TxtNode from single line.
+ * @param {Line} line - A line
+ * @return {TxtNode} Created TxtNode
+ */
+export function createCommentNodeFromLine(line) {
+  assert(line.isComment);
+  const node = createInlineNode(Syntax.Comment, line.text, contextFromLine(line));
+  let match;
+  if (match = line.text.match(/^#@#\s*(.*)/)) {
+    node.value = match[1];
+  } else if (match = line.text.match(/^#@warn\((.*)\)/)) {
+    node.value = match[1];
+  } else {
+    node.value = line.text;
+  }
+
+  return node;
 }
 
 /**

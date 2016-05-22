@@ -87,12 +87,12 @@ describe('parser-utils', function () {
 
     it('should return null when inline tag does not appear', function () {
       const tag = findInlineTag(`AAA`);
-      assert(tag == null);
+      assert(tag === null);
     });
 
     it('should return null when inline tag is broken', function () {
       const tag = findInlineTag(`AAA@<b>{BBCCC`);
-      assert(tag == null);
+      assert(tag === null);
     });
   });
 });

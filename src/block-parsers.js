@@ -3,8 +3,8 @@
 import { Syntax } from './mapping';
 import { parseText, parseLine } from './inline-parsers';
 import {
-  createNodeFromChunk, createNodeFromLinesInChunk, createInlineNode, contextFromLine,
-  contextNeedsUnescapeBrackets
+  createNodeFromChunk, createNodeFromLinesInChunk, createCommentNodeFromLine, createInlineNode,
+  contextFromLine, contextNeedsUnescapeBrackets
 } from './parser-utils';
 
 export const BlockParsers = {
@@ -39,16 +39,16 @@ export const BlockParsers = {
 };
 
 /**
- * parse block with caption.
+ * return new parser to parse block with caption.
  * @param {number} captionIndex - index of caption in block args
  * @param {function} blockParser - Parser function of a block
- * @return {TxtNode} block node
+ * @return {function} parser function
  */
 function withCaption(captionIndex, blockParser) {
   return function (block) {
     const node = blockParser(block);
 
-    if (captionIndex != null) {
+    if (captionIndex !== null) {
       const blockArg = block.args[captionIndex];
       if (blockArg) {
         const caption = parseBlockArg(Syntax.Caption, blockArg, block.chunk.lines[0]);
@@ -85,6 +85,10 @@ function parseTable(block) {
  * @return {[TxtNode]} ListItem nodes in the line
  */
 function parseTableContent(line) {
+  if (line.isComment) {
+    return [createCommentNodeFromLine(line)];
+  }
+
   if (line.text.match(/^-+$/)) {
     return [];  // Ignore horizontal line
   }
@@ -100,7 +104,7 @@ function parseTableContent(line) {
       startColumn += 1;
     }
 
-    if (cellContent == '') {
+    if (cellContent === '') {
       continue;
     }
 
@@ -143,7 +147,13 @@ function parseQuote(block) {
  * @return {TxtNode} CodeBlock node
  */
 function parseCodeBlock(block) {
-  return createNodeFromChunk(block.chunk, Syntax.CodeBlock);
+  const node = createNodeFromChunk(block.chunk, Syntax.CodeBlock);
+  node.value = block.chunk.lines
+    .slice(1, block.chunk.lines.length - 1)
+    .filter(line => !line.isComment)
+    .map(line => line.raw)
+    .join('');
+  return node;
 }
 
 /**
@@ -199,7 +209,7 @@ export function parseBlockWithContent(block, type) {
   };
 
   chunk.lines.slice(1, chunk.lines.length - 1).forEach(line => {
-    if (line.text == '') {
+    if (line.text === '') {
       flushParagraph();
     } else {
       lines.push(line);

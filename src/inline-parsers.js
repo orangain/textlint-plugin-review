@@ -3,8 +3,8 @@
 import assert from 'power-assert';
 import { Syntax } from './mapping';
 import {
-  parseBlockArg, findInlineTag, createNodeFromChunk, createStrNode, createInlineNode,
-  contextFromLine, offsetContext, contextNeedsUnescapeBraces, unescapeValue
+  parseBlockArg, findInlineTag, createNodeFromChunk, createCommentNodeFromLine, createStrNode,
+  createInlineNode, contextFromLine, offsetContext, contextNeedsUnescapeBraces, unescapeValue
 } from './parser-utils';
 
 /**
@@ -13,6 +13,10 @@ import {
  * @return {[TxtNode]} TxtNodes
  */
 export function parseLine(line) {
+  if (line.isComment) {
+    return [createCommentNodeFromLine(line)];
+  }
+
   return parseText(line.text, contextFromLine(line));
 }
 
@@ -46,13 +50,27 @@ const InlineParsers = {
   column:  inlineNonTextTagParser(Syntax.Reference),
   fn:      inlineNonTextTagParser(Syntax.Reference),
 
-  code:    parseCodeTag,
+  code:    withValue(inlineNonTextTagParser(Syntax.Code)),
+  comment: withValue(inlineNonTextTagParser(Syntax.Comment)),
   uchar:   inlineNonTextTagParser(Syntax.UnicodeChar),
   br:      inlineNonTextTagParser(Syntax.Break),
   icon:    inlineNonTextTagParser(Syntax.Icon),
   m:       inlineNonTextTagParser(Syntax.Math),
   raw:     inlineNonTextTagParser(Syntax.Raw),
 };
+
+/**
+ * get new inline tag parser to get value attribute.
+ * @param {function} inlineParser - Parser function of a inline tag
+ * @return {function} parser function
+ */
+function withValue(inlineParser) {
+  return (tag, context) => {
+    const node = inlineParser(tag, context);
+    node.value = unescapeValue(tag.content.raw, context);
+    return node;
+  };
+}
 
 /**
  * get non-text tag parser function.
@@ -102,18 +120,6 @@ function parseInlineTextTag(type, tag, context) {
 }
 
 /**
- * parse code tag, which has no child.
- * @param {Tag} tag - tag to parse
- * @param {Context} context - context of the node
- * @return {TxtNode}
- */
-function parseCodeTag(tag, context) {
-  const node = createInlineNode(Syntax.Code, tag.fullText, context);
-  node.value = unescapeValue(tag.content.raw, context);
-  return node;
-}
-
-/**
  * parse @<href>{} tag.
  * @param {Tag} tag - tag to parse
  * @param {Context} context - context of the node
@@ -126,7 +132,7 @@ function parseHrefTag(tag, context) {
   const url = pieces[0];
   let label;
   let labelOffset;
-  if (pieces.length == 2) {
+  if (pieces.length === 2) {
     label = pieces[1];
     labelOffset = tag.content.index + tag.content.raw.indexOf(label, url.length);
     assert(labelOffset >= tag.content.index);
@@ -153,7 +159,7 @@ function parseHrefTag(tag, context) {
 function parseRubyTag(tag, context) {
   const node = createInlineNode(Syntax.Ruby, tag.fullText, context);
   const pieces = tag.content.raw.split(/\s*,\s*/, 2);
-  assert(pieces.length == 2);
+  assert(pieces.length === 2);
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 
@@ -177,7 +183,7 @@ export function parseText(text, context) {
   const nodes = [];
   let tag;
   while (tag = findInlineTag(text)) {
-    if (tag.precedingText != '') {
+    if (tag.precedingText !== '') {
       const node = createStrNode(tag.precedingText, context);
       nodes.push(node);
       context = offsetContext(context, node.raw.length);
