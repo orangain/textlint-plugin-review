@@ -134,7 +134,7 @@ function parseKeywordTag(tag, context) {
     node.alt = pieces[1];
   }
 
-  const strNode = createStrNode(word, context);
+  const strNode = createStrNode(word, offsetContext(context, tag.content.index));
   node.children = [strNode];
 
   return node;
@@ -184,7 +184,7 @@ function parseRubyTag(tag, context) {
   const rubyBase = pieces[0];
   const rubyText = pieces[1];
 
-  const strNode = createStrNode(rubyBase, context);
+  const strNode = createStrNode(rubyBase, offsetContext(context, tag.content.index));
 
   node.rubyText = rubyText;
   node.children = [strNode];
