@@ -441,6 +441,10 @@ Foo
       const caption = image.children[0];
       assert(caption.type === 'Caption');
       assert(caption.raw === 'a brief history of UNIX-like OS');
+      assert(caption.children.length == 1);
+      const str = caption.children[0];
+      assert(str.type === 'Str');
+      assert(str.raw === 'a brief history of UNIX-like OS');
     });
 
     it('should parse multi-line image block with caption', function () {
@@ -456,6 +460,10 @@ System V
       const caption = image.children[0];
       assert(caption.type === 'Caption');
       assert(caption.raw === 'a brief history of UNIX-like OS');
+      assert(caption.children.length == 1);
+      const str = caption.children[0];
+      assert(str.type === 'Str');
+      assert(str.raw === 'a brief history of UNIX-like OS');
     });
 
     it('should parse lead block as block having paragraphs', function () {
