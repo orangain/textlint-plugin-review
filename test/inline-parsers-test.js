@@ -147,5 +147,33 @@ describe('inline-parsers', function () {
       assert(comment.raw === '@<comment>{TODO: fix this}');
       assert(comment.value === 'TODO: fix this');
     });
+
+    it('should parse kw tag as a Strong node', function () {
+      const nodes = parseText(`@<kw>{SMTP} is a protocol for email.`, context);
+      assert(nodes.length === 2);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Strong', 'Str']);
+      const kw = nodes[0];
+      assert(kw.raw === '@<kw>{SMTP}');
+      assert(kw.alt === undefined);
+      assert(kw.children.length === 1);
+      const str = kw.children[0];
+      assert(str.type === 'Str');
+      assert(str.raw === 'SMTP');
+    });
+
+    it('should parse kw tag with alt attribute', function () {
+      const nodes = parseText(`@<kw>{SMTP, Simple Mail Transfer Protocol} is a protocol for email.`, context);
+      assert(nodes.length === 2);
+      assert.deepEqual(nodes.map(node => node.type),
+                       ['Strong', 'Str']);
+      const kw = nodes[0];
+      assert(kw.raw === '@<kw>{SMTP, Simple Mail Transfer Protocol}');
+      assert(kw.alt === 'Simple Mail Transfer Protocol');
+      assert(kw.children.length === 1);
+      const str = kw.children[0];
+      assert(str.type === 'Str');
+      assert(str.raw === 'SMTP');
+    });
   });
 });

@@ -22,7 +22,6 @@ export function parseLine(line) {
 
 const InlineParsers = {
   // text tags
-  kw:      inlineTextTagParser(Syntax.Keyword),
   bou:     inlineTextTagParser(Syntax.Bouten),
   ami:     inlineTextTagParser(Syntax.Amikake),
   u:       inlineTextTagParser(Syntax.Underline),
@@ -36,6 +35,7 @@ const InlineParsers = {
   tcy:     inlineTextTagParser(Syntax.TateChuYoko),
 
   // partially text tags
+  kw:      parseKeywordTag,
   ruby:    parseRubyTag,
   href:    parseHrefTag,
 
@@ -116,6 +116,27 @@ function parseInlineTextTag(type, tag, context) {
   const strContext = offsetContext(context, tag.content.index);
   const strNode = createStrNode(tag.content.raw, strContext);
   node.children = [strNode];
+  return node;
+}
+
+/**
+ * parse @<kw>{} tag.
+ * @param {Tag} tag - tag to parse
+ * @param {Context} context - context of the node
+ * @return {TxtNode}
+ */
+function parseKeywordTag(tag, context) {
+  const node = createInlineNode(Syntax.Keyword, tag.fullText, context);
+
+  const pieces = tag.content.raw.split(/\s*,\s*/, 2);
+  const word = pieces[0];
+  if (pieces.length === 2) {
+    node.alt = pieces[1];
+  }
+
+  const strNode = createStrNode(word, context);
+  node.children = [strNode];
+
   return node;
 }
 
