@@ -85,6 +85,7 @@ describe('inline-parsers', function () {
       assert(link.children.length === 1);
       assert(link.children[0].type === 'Str');
       assert(link.children[0].raw === 'http://www.google.com/');
+      assert(link.children[0].loc.start.column === 13);
       assert(link.loc.start.column === 5);
       assert.deepEqual(link.range, [5, 36]);
     });
@@ -129,6 +130,7 @@ describe('inline-parsers', function () {
       assert(ruby.children.length === 1);
       assert(ruby.children[0].type === 'Str');
       assert(ruby.children[0].raw === 'Matsumoto');
+      assert(ruby.children[0].loc.start.column === 14);
     });
 
     it('should parse fn tag as a Reference node', function () {
@@ -160,6 +162,7 @@ describe('inline-parsers', function () {
       const str = kw.children[0];
       assert(str.type === 'Str');
       assert(str.raw === 'SMTP');
+      assert(str.loc.start.column == 6);
     });
 
     it('should parse kw tag with alt attribute', function () {
@@ -174,6 +177,7 @@ describe('inline-parsers', function () {
       const str = kw.children[0];
       assert(str.type === 'Str');
       assert(str.raw === 'SMTP');
+      assert(str.loc.start.column === 6);
     });
   });
 });
