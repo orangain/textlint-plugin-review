@@ -1,8 +1,8 @@
 // LICENSE : MIT
 'use strict';
 import assert from 'assert';
-import { traverse } from 'txt-ast-traverse';
-import { test as testTextlintAST } from 'textlint-ast-test';
+import { traverse } from '@textlint/ast-traverse';
+import { test as testTextlintAST } from '@textlint/ast-tester';
 import { Syntax } from './mapping';
 import { parseAsChunks } from './chunker';
 import { ChunkParsers } from './chunk-parsers';

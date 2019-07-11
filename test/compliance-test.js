@@ -1,6 +1,6 @@
 // LICENSE : MIT
 'use strict';
-import { isTxtAST } from 'textlint-ast-test';
+import { isTxtAST } from '@textlint/ast-tester';
 import { parse } from '../src/review-to-ast';
 import assert from 'power-assert';
 import fs from 'fs';
