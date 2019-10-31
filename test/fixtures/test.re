@@ -7,7 +7,9 @@ This is a sample document of Re:VIEW.
 =={about} About
 
 #@# textlint-disable no-todo
+
 TODO: This is TODO
+
 #@# textlint-enable no-todo
 
 Consecutive lines

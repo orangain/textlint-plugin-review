@@ -1,0 +1,19 @@
+{
+  "presets": [
+    "env"
+  ],
+  "env": {
+    "development": {
+      "presets": [
+        "power-assert"
+      ]
+    }
+  },
+  "plugins": [
+    "babel-plugin-espower"
+  ],
+  "ignore":[
+    "lib",
+    "node_modules"
+  ]
+}
