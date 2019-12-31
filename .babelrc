@@ -1,6 +1,6 @@
 {
   "presets": [
-    "env"
+    "@babel/preset-env"
   ],
   "env": {
     "development": {
@@ -12,7 +12,7 @@
   "plugins": [
     "babel-plugin-espower"
   ],
-  "ignore":[
+  "ignore": [
     "lib",
     "node_modules"
   ]
