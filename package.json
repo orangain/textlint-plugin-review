@@ -43,7 +43,7 @@
     "babel-plugin-espower": "^3.0.1",
     "babel-preset-power-assert": "^3.0.0",
     "eslint": "^6.8.0",
-    "mocha": "^6.2.2",
+    "mocha": "^10.2.0",
     "power-assert": "^1.6.1",
     "textlint": "^11.5.0",
     "textlint-filter-rule-comments": "^1.2.2",
