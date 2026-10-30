@@ -131,7 +131,9 @@ function parseKeywordTag(tag, context) {
   const pieces = tag.content.raw.split(/\s*,\s*/, 2);
   const word = pieces[0];
   if (pieces.length === 2) {
-    node.alt = pieces[1];
+    // Not `alt`: textlint-util-to-string (used by rules such as sentence-length)
+    // takes `alt` as replacement text and ignores the children, so the keyword itself is dropped.
+    node.keywordAlt = pieces[1];
   }
 
   const strNode = createStrNode(word, offsetContext(context, tag.content.index));
