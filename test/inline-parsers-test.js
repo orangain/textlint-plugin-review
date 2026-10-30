@@ -157,7 +157,7 @@ describe('inline-parsers', function () {
                        ['Strong', 'Str']);
       const kw = nodes[0];
       assert(kw.raw === '@<kw>{SMTP}');
-      assert(kw.alt === undefined);
+      assert(kw.keywordAlt === undefined);
       assert(kw.children.length === 1);
       const str = kw.children[0];
       assert(str.type === 'Str');
@@ -165,14 +165,15 @@ describe('inline-parsers', function () {
       assert(str.loc.start.column == 6);
     });
 
-    it('should parse kw tag with alt attribute', function () {
+    it('should parse kw tag with keywordAlt attribute, not alt', function () {
       const nodes = parseText(`@<kw>{SMTP, Simple Mail Transfer Protocol} is a protocol for email.`, context);
       assert(nodes.length === 2);
       assert.deepEqual(nodes.map(node => node.type),
                        ['Strong', 'Str']);
       const kw = nodes[0];
       assert(kw.raw === '@<kw>{SMTP, Simple Mail Transfer Protocol}');
-      assert(kw.alt === 'Simple Mail Transfer Protocol');
+      assert(kw.keywordAlt === 'Simple Mail Transfer Protocol');
+      assert(kw.alt === undefined);
       assert(kw.children.length === 1);
       const str = kw.children[0];
       assert(str.type === 'Str');
