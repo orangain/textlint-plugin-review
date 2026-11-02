@@ -40,6 +40,18 @@ describe('parser-utils', function () {
         { startColumn: 6, value: 'bar\\]baz' },
       ]);
     });
+
+    it('should parse an unclosed first argument as an empty array', function () {
+      const args = parseBlockArgs('[foo', 0);
+      assert.deepEqual(args, []);
+    });
+
+    it('should parse arguments before an unclosed argument', function () {
+      const args = parseBlockArgs('[foo][bar', 0);
+      assert.deepEqual(args, [
+        { startColumn: 1, value: 'foo' },
+      ]);
+    });
   });
 
   describe('#findInlineTag', function () {

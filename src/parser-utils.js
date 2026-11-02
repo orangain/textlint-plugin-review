@@ -16,6 +16,9 @@ export function parseBlockArgs(argsText, offset) {
   let openIndex = 0;
   while (argsText[openIndex] === '[') {
     let closeIndex = findCloseBracket(argsText, ']', openIndex);
+    if (closeIndex < 0) {
+      break; // unclosed while typing: closeIndex + 1 would rewind openIndex to 0 and loop forever
+    }
 
     args.push({
       value: argsText.slice(openIndex + 1, closeIndex),

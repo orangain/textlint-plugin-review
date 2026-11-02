@@ -311,6 +311,22 @@ Foo
       assert(paragraph.children.length === 3);
     });
 
+    it('should parse footnote missing its text as footnote without paragraph', function () {
+      const result = parse(`//footnote[foo]`);
+      const footnote = result.children[0];
+      assert(footnote.type === 'Footnote');
+      assert(footnote.raw === '//footnote[foo]');
+      assert(footnote.children === undefined);
+    });
+
+    it('should parse footnote having unclosed text as footnote without paragraph', function () {
+      const result = parse(`//footnote[foo][This is`);
+      const footnote = result.children[0];
+      assert(footnote.type === 'Footnote');
+      assert(footnote.raw === '//footnote[foo][This is');
+      assert(footnote.children === undefined);
+    });
+
     it('should parse footnote having escape characters', function () {
       const result = parse(`//footnote[foo][See: [1\\]]`);
       const footnote = result.children[0];
