@@ -229,7 +229,7 @@ export function parseBlockWithContent(block, type) {
  * @return {TxtNode}
  */
 export function parseBlockArg(type, blockArg, line) {
-  const argText = blockArg.value;
+  const argText = blockArg && blockArg.value;
   if (!argText) {
     return null;
   }
